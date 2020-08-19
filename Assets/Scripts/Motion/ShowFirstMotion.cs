@@ -60,7 +60,7 @@ public class ShowFirstMotion : MotionInputMoveBase
     protected override void Init()
     {
         base.Init();
-
+          
         MotionType = MotionType.ShowFirstMotion;
         // Camera.main.fieldOfView = 30f;
         _touchIds = new Dictionary<int, ClickData>();
