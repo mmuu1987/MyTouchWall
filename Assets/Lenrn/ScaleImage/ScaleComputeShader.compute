@@ -1,0 +1,89 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#pragma kernel CSMain1
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+
+RWTexture2D<float4> Dst;
+
+Texture2D Source;
+
+float widthScale;
+float heightScale;
+
+RWTexture2D<float4>  Result;
+
+Texture2D YearTex;
+
+int LableHeight;
+int BorderWidth;
+
+
+[numthreads(1,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+
+	uint x = ceil(id.x/widthScale); 
+	uint y = ceil(id.y/heightScale); 
+
+	 Dst[id.xy]= Source[uint2(x,y)];
+}
+
+//3 kernel函数
+//组内三维线程数
+[numthreads(1,1,1)]
+void CSMain1 (uint3 id : SV_DispatchThreadID)
+{
+ //      //图片宽
+ //  uint ImageHeitht;
+ //  //图片高 
+ //  uint ImageWidth;
+
+ //   Source.GetDimensions(ImageWidth,ImageHeitht);
+
+ //  if(id.x>BorderWidth&& id.x<BorderWidth+ImageWidth && id.y>BorderWidth && id.y<BorderWidth+ImageHeitht)
+ //  {
+ //    int indexWidth = id.x-BorderWidth;
+
+	// int indexHeight = id.y-BorderWidth;
+     
+ //    Result[id.xy] =Source[uint2(indexWidth,indexHeight)];
+ //  }
+	//else Result[id.xy]= float4(1,1,1,1);
+
+	   //图片宽
+   uint ImageHeitht;
+   //图片高 
+   uint ImageWidth;
+
+   Source.GetDimensions(ImageWidth,ImageHeitht);
+
+   //图片索引是从左下角开始
+   if(id.x>BorderWidth&& id.x<BorderWidth+ImageWidth && id.y>BorderWidth && id.y<BorderWidth+ImageHeitht)
+   {
+     int indexWidth = id.x-BorderWidth;
+
+	 int indexHeight = id.y-BorderWidth;
+     
+     Result[id.xy] =Source[uint2(indexWidth,indexHeight)];
+   }
+   else
+   {
+      if(id.y>=BorderWidth + BorderWidth+ImageHeitht)
+	  {
+	    uint y1 =  id.y - BorderWidth-BorderWidth-ImageHeitht ;
+
+		uint w,h;
+
+		YearTex.GetDimensions( w, h);
+
+	     if(id.x< w)
+	      Result[id.xy] = YearTex[uint2(id.x,y1)];
+		 else
+		  Result[id.xy]= float4(1,1,1,1);
+	  }
+	  else Result[id.xy]= float4(1,1,1,1);
+   }
+
+}
