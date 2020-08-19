@@ -190,6 +190,14 @@ public class ShowFirstMotion : MotionInputMoveBase
         ComputeShader.SetVector("srcPos", SrcPos);
         ComputeShader.SetInt("selectClass", _selectClass);
         ComputeShader.SetInt("hideClass", _hideClass);
+
+        if (_selectClassBuffer != null)
+            _selectClassBuffer.Release();
+        temps.Add(Vector4.one);
+        _selectClassBuffer = new ComputeBuffer(temps.Count, 16);
+        _selectClassBuffer.SetData(temps.ToArray());
+        ComputeShader.SetBuffer(dispatchID, "randomPosData", _selectClassBuffer);
+
         InitDisPatch(InitID);
 
 
@@ -370,8 +378,8 @@ public class ShowFirstMotion : MotionInputMoveBase
         ComputeShader.SetInt("hideClass", _hideClass);
 
         if (_selectClassBuffer!=null)
-        _selectClassBuffer.Release();
-        _selectClassBuffer = new ComputeBuffer(temps.Count, 12);
+            _selectClassBuffer.Release();
+        _selectClassBuffer = new ComputeBuffer(temps.Count, 16);
         _selectClassBuffer.SetData(temps.ToArray());
         ComputeShader.SetBuffer(dispatchID, "randomPosData", _selectClassBuffer);
         ComputeShader.SetInt("widthScale", _widthScale);
