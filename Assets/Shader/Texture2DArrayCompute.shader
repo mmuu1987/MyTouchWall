@@ -94,14 +94,14 @@
             StructuredBuffer<PosAndDir> positionBuffer;
 			StructuredBuffer<float4> colorBuffer;
             #endif
-
+			
             struct v2f
             {
                 float4 pos : SV_POSITION;
                 float2 uv_MainTex : TEXCOORD0;
 				float2 uv_Main2Tex:TEXCOORD2;
 				float2 RadiusBuceVU : TEXCOORD1;
-				uint index:SV_InstanceID;//告诉片元，输送实例ID
+				uint index:SV_InstanceID;//告诉片元，输送实例ID 
              
             };
             v2f vert (appdata_base v, uint instanceID : SV_InstanceID)
@@ -129,6 +129,7 @@
 				//o.uv_MainTex = v.texcoord;
 				o.index = instanceID;
 				o.RadiusBuceVU=v.texcoord-float2(0.5,0.5);       //将模型UV坐标原点置为中心原点,为了方便计算
+				
                 return o;
             }
 
@@ -166,6 +167,7 @@
             #else
                  col = _Color;
             #endif
+			
                return fixed4(col.xyz,1);
             }
 
