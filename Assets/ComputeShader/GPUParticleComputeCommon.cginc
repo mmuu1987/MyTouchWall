@@ -5,6 +5,9 @@
   #define THREAD_Y 1
   #define THREAD_Z 1
 
+
+
+
   RWStructuredBuffer<PosAndDir> positionBuffer;
   RWStructuredBuffer<float4> colorBuffer;
   //�߽���buff

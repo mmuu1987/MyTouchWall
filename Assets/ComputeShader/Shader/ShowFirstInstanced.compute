@@ -5,10 +5,12 @@
 #define thread_group_size_y 1
 #define P 3.141592653
 
-#include "Assets/ComputeShader/GPUParticle.cginc"
+#include "../GPUParticle.cginc"
 #include "../GPUParticleComputeCommon.cginc"
-#include "Assets/Common/Shaders/Math.cginc"
-#include "Assets/Common/Shaders/Random.cginc"
+#include "../../Common/Shaders/Math.cginc"
+#include "../../Common/Shaders/Random.cginc"
+
+
 
 
 //反馈给cs，点击到哪个图索引
@@ -49,6 +51,7 @@ int selectClass;
 int hideClass;
 //展示的宽度
 int widthScale;
+
 
 //把屏幕坐标转成世界坐标，不支持相机旋转
 float3 ScreenToWorld(float3 p)
@@ -129,7 +132,7 @@ void CheckClickPoint(uint3 id)
     float alpha = depthBuffer[velocity.x].alpha;
 
     if (alpha < 1)
-        return; // 在第一排的深度才可以点击，用透明度判断是否在第一排
+        return; // 在第一排的深度才可以点击，用透明度判断是否在第一排 
   
   //float2 leftDownP2, float2 leftUpP1, float2 rightDownP3, float2 rightUpP4, float2 p
   //默认图片大小为长宽为1，一半就是0.5，
@@ -141,7 +144,7 @@ void CheckClickPoint(uint3 id)
 
     float2 rightUp = pos.xy + float2(0.5, 0.5);
 
-    bool isContains = ContainsQuadrangle(leftDown, leftUp, rightDown, rightUp, clickPoint);
+    bool isContains = ContainsQuadrangle(leftDown, leftUp, rightDown, rightUp, clickPoint.xy);
   
     if (isContains)
     {
@@ -247,7 +250,7 @@ void CSPositionKernel(uint3 id : SV_DispatchThreadID)
     else if (stateCode == 0)//进入被选中显示在前端的类别计算状态
     {
         float3 pos = float3(0, 0, 0);
-
+        [loop]
         for (int i = 0; i < count; i++)
         {
             if ((int) randomPosData[i].x == picIndex)
