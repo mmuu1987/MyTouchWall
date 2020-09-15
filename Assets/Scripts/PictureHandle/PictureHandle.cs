@@ -24,6 +24,7 @@ public class PictureHandle : MonoBehaviour
 
     public static PictureHandle Instance;
 
+    public MotionType MotionType;
 
     public RawImage TestImage;
 

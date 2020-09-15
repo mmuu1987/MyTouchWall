@@ -64,6 +64,8 @@ public struct PosAndDir
     /// </summary>
     public int stateCode;
 
+    
+
     public PosAndDir(int id)
     {
         position = new Vector4();
@@ -113,7 +115,11 @@ public enum MotionType
     /// <summary>
     /// 第一排显示整齐规律的图片，后面的做无序运动
     /// </summary>
-    ShowFirstMotion
+    ShowFirstMotion,
+    /// <summary>
+    /// 银河系运动
+    /// </summary>
+    Galaxy
 }
 
 public enum TouchType
@@ -216,8 +222,14 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
 
     public ShowFirstMotion ShowFirstMotion;
 
+    public GalaxyMotion GalaxyMotion;
+
     public static TextureInstanced Instance;
 
+    /// <summary>
+    /// 银河位置需要用到的图片
+    /// </summary>
+    public Texture2D PosTexture2D;
 
     public RawImage MoveTexture;
 
@@ -225,6 +237,8 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
     /// 当前实例渲染的材质
     /// </summary>
     public Material CurMaterial { get; private set; }
+
+    public List<Vector3> GalaxyPosList;
 
     private void Awake()
     {
@@ -239,9 +253,12 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
         Width = Screen.width;
         Height = Screen.height;
 
+        Type = PictureHandle.Instance.MotionType;
+
         InstanceCount = HorizontalColumn * VerticalColumn;
         CurMaterial = InstanceMaterial;
         HandleTextureArry(PictureHandle.Instance.TexArr);
+        
        // PictureHandle.Instance.DestroyTexture();//贴图加载到GPU那边后这边内存就清理掉
 
         argsBuffer = new ComputeBuffer(5, sizeof(uint), ComputeBufferType.IndirectArguments);
@@ -279,8 +296,9 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
     {
         LoopMotion.ExitMotion();
         ClassiFicationMotion.ExitMotion();
-       ShowFirstMotion.ExitMotion();
+        ShowFirstMotion.ExitMotion();
         MultiDepthMotion.ExitMotion();
+        GalaxyMotion.ExitMotion();
         CubeMotion.StartMotion(this);
 
     }
@@ -290,6 +308,7 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
         CubeMotion.ExitMotion();
         ClassiFicationMotion.ExitMotion();
         MultiDepthMotion.ExitMotion();
+        GalaxyMotion.ExitMotion();
         ShowFirstMotion.ExitMotion();
         LoopMotion.StartMotion(this);
     }
@@ -305,6 +324,7 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
     void UpdateMultiDepthMotion()
     {
         CubeMotion.ExitMotion();
+        GalaxyMotion.ExitMotion();
         LoopMotion.ExitMotion();
         ShowFirstMotion.ExitMotion();
         ClassiFicationMotion.ExitMotion();
@@ -315,10 +335,20 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
     void UpdateShowFirstMotion()
     {
         CubeMotion.ExitMotion();
+        GalaxyMotion.ExitMotion();
         LoopMotion.ExitMotion();
         ClassiFicationMotion.ExitMotion();
         MultiDepthMotion.ExitMotion();
         ShowFirstMotion.StartMotion(this);
+    }
+    void UpdateGalaxyMotion()
+    {
+        CubeMotion.ExitMotion();
+        LoopMotion.ExitMotion();
+        ClassiFicationMotion.ExitMotion();
+        MultiDepthMotion.ExitMotion();
+        ShowFirstMotion.ExitMotion();
+        GalaxyMotion.StartMotion(this);
     }
 
     public void CubeType()
@@ -355,6 +385,9 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
             case MotionType.ShowFirstMotion:
                 UpdateShowFirstMotion();
                 break;
+            case MotionType.Galaxy:
+                UpdateGalaxyMotion();
+                break;
             default:
                 throw new ArgumentOutOfRangeException("type", type, null);
         }
@@ -370,6 +403,7 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
 
         InstanceCount = Mathf.ClosestPowerOfTwo(InstanceCount);
 
+        GalaxyPosList = Common.GetPos(PosTexture2D, 1.5f, InstanceCount,10);
 
         InstanceMesh.bounds = new Bounds(Vector3.zero, Vector3.one * 10000f);
 

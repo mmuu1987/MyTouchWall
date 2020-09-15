@@ -214,6 +214,54 @@ void LerpTex(uint3 id)
 [numthreads(thread_group_size_x, thread_group_size_y, 1)]
 void CSPositionKernel(uint3 id : SV_DispatchThreadID)
 {
+  // float3 moveTarget = positionBuffer[id.x].moveTarget;
+  // float4 position = positionBuffer[id.x].position;
+  // float4 otherData = positionBuffer[id.x].originalPos;
+  // float3 moveDir = positionBuffer[id.x].moveDir;
+  // float4 velocity = positionBuffer[id.x].velocity;
+  // int picIndex = positionBuffer[id.x].picIndex;
+  // //uvOffset.xyz在状态0 存储的是当前的位置信息，uvOffset.w存储的是参数t,范围（0-1）
+  // float4 uvOffset = positionBuffer[id.x].uvOffset;
+  // float4 uv2Offset = positionBuffer[id.x].uv2Offset;
+  // int stateCode = positionBuffer[id.x].stateCode;
+
+  // uint count;
+  // uint stride;
+  // randomPosData.GetDimensions(count, stride);
+  
+
+  
+  // if(stateCode ==-2)//做类似银河系的圆周运动
+  // {
+    //   float4 rot = rotate_angle_axis(uvOffset.w / RadianRatio, otherData.xyz);
+
+    //   float3 newVector = rotate_vector_at(uvOffset.xyz, float3(0, 0, 0), rot);
+
+    
+    //   position.xyz =srcPos + newVector.xyz ;
+
+    //   uvOffset.xyz = newVector;
+  // }
+  
+  
+
+  // positionBuffer[id.x].velocity = velocity;
+  // positionBuffer[id.x].stateCode = stateCode;
+  // positionBuffer[id.x].moveDir = moveDir;
+  // positionBuffer[id.x].moveTarget = moveTarget;
+  // positionBuffer[id.x].position = position;
+  // positionBuffer[id.x].originalPos = otherData;
+  // positionBuffer[id.x].uvOffset = uvOffset;
+  // positionBuffer[id.x].uv2Offset = uv2Offset;
+  
+  
+}
+
+//位置变换  
+[numthreads(thread_group_size_x, thread_group_size_y, 1)]
+void InitLerp(uint3 id : SV_DispatchThreadID)
+{
+
   float3 moveTarget = positionBuffer[id.x].moveTarget;
   float4 position = positionBuffer[id.x].position;
   float4 otherData = positionBuffer[id.x].originalPos;
@@ -229,154 +277,11 @@ void CSPositionKernel(uint3 id : SV_DispatchThreadID)
   uint stride;
   randomPosData.GetDimensions(count, stride);
   
-
-  if (stateCode == -1)
-  {
-    float4 rot = rotate_angle_axis(otherData.w / RadianRatio, otherData.xyz);
-
-    float3 newVector = rotate_vector_at(moveDir, float3(0, 0, 0), rot);
-
-    moveTarget = srcPos + newVector;
-
-    float3 lerpVal = lerp(position.xyz, moveTarget, deltaTime);
-    
-    position.xyz = lerpVal;
-    moveDir = newVector;
-    
-    if (selectClass == (int) velocity.x && (int) velocity.w == (int) 1)
-    stateCode = 0; //进入被选中显示在前端的类别计算状态
-
-  }
-  else if(stateCode ==-2)//做类似银河系的圆周运动
-  {
-    float4 rot = rotate_angle_axis(uvOffset.w / RadianRatio, otherData.xyz);
-
-    float3 newVector = rotate_vector_at(uvOffset.xyz, float3(0, 0, 0), rot);
-
-    
-    position.xyz =srcPos + newVector.xyz ;
-
-    uvOffset.xyz = newVector;
-
-
-
-    //moveTarget = srcPos + newVector;
-
-
-  }
-  else if (stateCode == 0)//进入被选中显示在前端的类别计算状态
-  {
-    float3 pos = float3(0, 0, 0);
-    [loop]
-    for (int i = 0; i < count; i++)
-    {
-      if ((int) randomPosData[i].x == picIndex)
-      {
-        pos.xy = randomPosData[i].yz;
-        moveTarget = pos; //记录目标位置
-        //position.y = srcPos.y;
-        uvOffset.xyz = position.xyz; //记录当前位置
-        uvOffset.w = 0;
-        stateCode = 1; //说明已经赋值过了，可以做向摄像机走动的动作，进入飞到屏幕的状态
-        break;
-      }
-    }
-  }
-  else if (stateCode == 1)//进入被选中显示在前端的类别计算状态
-  {
-    float3 p0 = uvOffset.xyz;
-    float3 p2 = moveTarget;
-    
-    float x = p2.x + 100;
-    float y = srcPos.y;
-    float z = p2.z + (p0.z - p2.z) * 0.05; //求出z
-
-    float3 p1 = float3(x, y, z);
-
-    float x1 = p2.x + 100;
-    float y1 = srcPos.y;
-    float z1 = p2.z + (p0.z - p2.z) * 0.85;
-
-    float p3 = float3(x1, y1, z1);
-
-    
-    float3 p = CalculateCubicBezierPoint(uvOffset.w, p0, p1, p2);
-
-    position.xyz = p;
-
-    uvOffset.w += deltaTime * 0.3f;
-    //说明结束了到屏幕的动画
-    if (uvOffset.w >= 1)
-    {
-      uvOffset.w = 1;
-      //进入在屏幕从右到左缓慢运动的状态
-      stateCode = 2; //进入在屏幕从右到左缓慢运动的状态
-      position.xyz = p2;
-    }
-  }
-  else if (stateCode == 2)//进入被选中显示在前端的类别计算状态
-  {
-    moveTarget.x -= 0.1;
-    float3 pos = lerp(position.xyz, moveTarget, deltaTime);
-    //边界检测
-    float RightBorder = (widthScale * 2) * velocity.z;
-    float LeftBorder = -velocity.z;
-    if (pos.x < LeftBorder - 5)
-    {
-      pos.x += RightBorder - 5;
-      moveTarget.x += RightBorder - 5;
-    }
-    //边界检测
-
-    position.xyz = pos;
-    if (hideClass == (int) velocity.x)//符合条件就返回圆球
-    {
-      stateCode = 3;
-    }
-
-  }
-  else if (stateCode == 3)//进入被选中显示在前端的类别计算状态
-  {
-    float4 rot = rotate_angle_axis(otherData.w / RadianRatio, otherData.xyz);
-
-    float3 newVector = rotate_vector_at(moveDir, float3(0, 0, 0), rot);
-
-    moveTarget = srcPos + newVector;
-    moveDir = newVector;
-    
-    // moveTarget = randomPosData[i].yzw;//记录目标位置
-    uvOffset.xyz = position.xyz; //记录当前位置
-    uvOffset.w = 0;
-    stateCode = 4; //说明已经赋值过了，可以做向摄像机走动的动作，进入飞到屏幕的状态
-    
-  }
-  else if (stateCode == 4)//进入被选中显示在前端的类别计算状态
-  {
-    float3 p0 = uvOffset.xyz;
-    float3 p2 = moveTarget;
-
-    float x = p2.x - 200;
-    float y = srcPos.y;
-    float z = p2.z - (p2.z - p0.z) * 0.05; //求出z
-
-    float3 p1 = float3(x, y, z);
-
-    
-
-    float3 p = CalculateCubicBezierPoint(uvOffset.w, p0, p1, p2);
-
-    position.xyz = p;
-
-    uvOffset.w += deltaTime * 0.3f;
-    //说明结束了到屏幕的动画
-    if (uvOffset.w >= 1)
-    {
-      uvOffset.w = 1;
-      //进入在屏幕从右到左缓慢运动的状态
-      stateCode = -1; //进入在屏幕从右到左缓慢运动的状态
-      position.xyz = p2;
-    }
-  }
+  position.xyz =srcPos + uvOffset.xyz ;
+  
+  
+  
+  
 
   positionBuffer[id.x].velocity = velocity;
   positionBuffer[id.x].stateCode = stateCode;
@@ -386,14 +291,5 @@ void CSPositionKernel(uint3 id : SV_DispatchThreadID)
   positionBuffer[id.x].originalPos = otherData;
   positionBuffer[id.x].uvOffset = uvOffset;
   positionBuffer[id.x].uv2Offset = uv2Offset;
-  
-  
-}
-
-//位置变换  
-[numthreads(thread_group_size_x, thread_group_size_y, 1)]
-void InitLerp(uint3 id : SV_DispatchThreadID)
-{
-
   
 }

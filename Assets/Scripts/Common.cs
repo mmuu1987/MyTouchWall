@@ -5,6 +5,8 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using UnityEngine;
+using Color = UnityEngine.Color;
+using Random = System.Random;
 
 public static class Common
 {
@@ -499,6 +501,83 @@ public static class Common
         }
         return path;
 
+    }
+
+    /// <summary>
+    /// 从图片中获取向量信息
+    /// </summary>
+    /// <param name="tex"></param>
+    /// <param name="maxAlpha"></param>
+    /// <param name="count"></param>
+    /// <returns></returns>
+    public static  List<Vector3> GetPos(Texture2D tex, float maxAlpha, int count,float scale = 1f)
+    {
+
+        var clos = tex.GetPixels();
+
+        int texWidth = tex.width;
+
+        int texHeight = tex.height;
+
+        Color [,]  colors = new Color[tex.width, tex.height];
+
+        int k = 0;
+        for (int i = 0; i < clos.Length; i++)
+        {
+
+            if (i >= (k + 1) * tex.width)
+            {
+                k++;
+            }
+
+            colors[i - k * tex.height, k] = clos[i];
+
+
+        }
+
+        List<Vector3> posList = new List<Vector3>();
+
+
+
+        for (int i = 0; i < count; i++)
+        {
+            while (true)
+            {
+                int width = UnityEngine.Random.Range(0, tex.width);
+                int height = UnityEngine.Random.Range(0, tex.height);
+
+                Color col = colors[width, height];
+
+                float val = col.r + col.g + col.b;
+
+                var pos = new Vector2(width, height) - new Vector2(texWidth / 2, texHeight / 2);
+
+               
+
+
+                if (val >= maxAlpha)
+                {
+                    pos = pos / scale;
+
+                    float dis = pos.magnitude;
+
+                    float r = texWidth / 2f;
+
+                    float v1 = dis / r;
+
+                    float h = (1 - v1)*100;//* UnityEngine.Random.Range(-r /scale/25, r / scale/25);
+
+                    posList.Add(new Vector3(pos.x,h,pos.y));
+
+                    break;
+                }
+
+            }
+
+
+        }
+
+        return posList;
     }
 
     #region Easing Curves
