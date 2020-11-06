@@ -63,7 +63,7 @@ public class ShowFPS : MonoBehaviour {
 
             fontStyle.normal.background = null;    //设置背景填充
             fontStyle.normal.textColor = new Color(1, 0, 0);   //设置字体颜色
-            fontStyle.fontSize = 200;       //字体大小
+            fontStyle.fontSize = 100;       //字体大小
 
 
         }

@@ -114,21 +114,21 @@ public class FlyCamera : MonoBehaviour
         transform.rotation *= Quaternion.AngleAxis(rotationY, Vector3.left);
     }
 
-    void OnGUI()
-    {
+    //void OnGUI()
+    //{
 
-        GUIStyle s = new GUIStyle(GUI.skin.label);
-        s.alignment = TextAnchor.MiddleCenter;
-        GUI.color = new Color(1,1,1,0.4f);
+    //    GUIStyle s = new GUIStyle(GUI.skin.label);
+    //    s.alignment = TextAnchor.MiddleCenter;
+    //    GUI.color = new Color(1,1,1,0.4f);
 
-        if (Cursor.lockState == CursorLockMode.Locked)
-        {
-            GUI.Label(new Rect(Screen.width / 2 - 256, Screen.height - 37, 512, 32), "'Space' - switch orbit camera.",s);
-        }
-        else
-        {
-            GUI.Label(new Rect(0, Screen.height - 37, Screen.width, 32), "'Space' - switch free fly camera. \n Click and Drag to rotate view", s);
-        }
+    //    if (Cursor.lockState == CursorLockMode.Locked)
+    //    {
+    //        GUI.Label(new Rect(Screen.width / 2 - 256, Screen.height - 37, 512, 32), "'Space' - switch orbit camera.",s);
+    //    }
+    //    else
+    //    {
+    //        GUI.Label(new Rect(0, Screen.height - 37, Screen.width, 32), "'Space' - switch free fly camera. \n Click and Drag to rotate view", s);
+    //    }
 
-    }
+    //}
 }

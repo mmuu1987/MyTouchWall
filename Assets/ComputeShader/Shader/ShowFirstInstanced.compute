@@ -5,6 +5,7 @@
 #define thread_group_size_y 1
 #define P 3.141592653
 
+#include "UnityCG.cginc"
 #include "../GPUParticle.cginc"
 #include "../GPUParticleComputeCommon.cginc"
 #include "../../Common/Shaders/Math.cginc"
@@ -20,6 +21,17 @@ RWStructuredBuffer<DepthInfo> depthBuffer;
 RWStructuredBuffer<float3> clicks;
 RWStructuredBuffer<float4> randomPosData;
 
+AppendStructuredBuffer<PosAndDir> AppendBuff;
+
+
+//视矩阵，也就是世界到摄像机的矩阵，由C#传递过来
+float4x4 v;
+//投影矩阵，也就是摄像机到屏幕的矩阵，由C#传递过来
+float4x4 p;
+//视矩阵的逆矩阵，也就是摄像机到世界的矩阵，由C#传递过来
+float4x4 iv;
+//投影矩阵的逆矩阵，也就是屏幕到摄像机的的矩阵，由C#传递过来
+float4x4 ip;
 
 float deltaTime;
 
@@ -53,341 +65,431 @@ int hideClass;
 int widthScale;
 
 
+float3 getNewPos(float3 v,float3 worldPos)
+{
+	float3 dir =   worldPos -_WorldSpaceCameraPos ;
+
+	
+	float3 up = float3(0,1,0);
+
+	up =  mul(iv,up);
+	
+	
+	
+	float4 q = QuaternionLookRotation(dir,up);
+
+	v = rotate_vector_at(v,float3(0,0,0),q);
+
+	return v;
+}
+
 //把屏幕坐标转成世界坐标，不支持相机旋转
 float3 ScreenToWorld(float3 p)
 {
-  float px = p.x / Width;
+	float px = p.x / Width;
 
-  px = (px - 0.5f) / 0.5f;
+	px = (px - 0.5f) / 0.5f;
 
-  float py = p.y / Height;
+	float py = p.y / Height;
 
-  py = (py - 0.5f) / 0.5f;
+	py = (py - 0.5f) / 0.5f;
 
-  float3 ppos = float3(px, py, p.z); //得到了齐次坐标
+	float3 ppos = float3(px, py, p.z); //得到了齐次坐标
 
-  ppos = float3(ppos.x * p.z, ppos.y * p.z, p.z); //反透视除法
+	ppos = float3(ppos.x * p.z, ppos.y * p.z, p.z); //反透视除法
 
-  float z1 = ppos.z / m32;
+	float z1 = ppos.z / m32;
 
-  float x1 = ppos.x / m00;
+	float x1 = ppos.x / m00;
 
-  float y1 = ppos.y / m11;
+	float y1 = ppos.y / m11;
 
 
-  //相机转世界坐标
-  x1 = camPos.x + x1;
-  y1 = camPos.y + y1;
-  z1 = camPos.z - z1;
+	//相机转世界坐标
+	x1 = camPos.x + x1;
+	y1 = camPos.y + y1;
+	z1 = camPos.z - z1;
 
-  //得到的坐标为世界坐标
-  return float3(x1, y1, z1);
+	//得到的坐标为世界坐标
+	return float3(x1, y1, z1);
 
 
 }
+
+//把世界坐标点转换到屏幕坐标，支持相机旋转
+//ComputeScreenPos虽然为unityCG.cginc的方法，但是不涉及到矩阵，所以可以应用该方法
+float2  WorldToScreenPos2(float3 pos)
+{
+	float4x4 vp = mul(p,v); 
+	
+	float4  vertex = mul(vp, float4(pos, 1.0));
+	
+	float4  screenPos = ComputeScreenPos(vertex);
+	
+	screenPos.xy=screenPos.xy/screenPos.w;
+	
+	float width = screenPos.x * _ScreenParams.x;
+	
+	float height = screenPos.y * _ScreenParams.y;
+	
+	return float2(width,height);
+}
+
+
 //世界坐标转屏幕坐标 不支持相机旋转
 float3 WorldToScreenPos(float3 worldPos)
 {
-  float z = camPos.z - worldPos.z;
+	float z = camPos.z - worldPos.z;
 
-  float x = worldPos.x - camPos.x;
+	float x = worldPos.x - camPos.x;
 
-  float y = worldPos.y - camPos.y;
+	float y = worldPos.y - camPos.y;
 
-  float3 temp1 = float3(x, y, z);
+	float3 temp1 = float3(x, y, z);
 
-  float z1 = temp1.z * m32;
+	float z1 = temp1.z * m32;
 
-  float x1 = temp1.x * m00;
+	float x1 = temp1.x * m00;
 
-  float y1 = temp1.y * m11;
+	float y1 = temp1.y * m11;
 
-  float3 ppos = float3(x1 / z1, y1 / z1, z1); //透视除法
+	float3 ppos = float3(x1 / z1, y1 / z1, z1); //透视除法
 
-  float x2 = ppos.x * 0.5f + 0.5f;
+	float x2 = ppos.x * 0.5f + 0.5f;
 
-  float y2 = ppos.y * 0.5f + 0.5f;
+	float y2 = ppos.y * 0.5f + 0.5f;
 
-  x2 = x2 * Width;
+	x2 = x2 * Width;
 
-  y2 = y2 * Height;
+	y2 = y2 * Height;
 
 
-  return float3(x2, y2, 0);
+	return float3(x2, y2, 0);
+}
+
+
+//把屏幕坐标转成世界坐标，支持相机旋转
+float3 ScreenToWorldMatrix2(float3 p)
+{
+	float px = p.x / Width;
+	
+	px = (px - 0.5f) / 0.5f;
+	
+	float py = p.y / Height;
+	
+	py = (py - 0.5f) / 0.5f;
+	
+	float3 ppos = float3(px, py, p.z); //得到了齐次坐标
+	
+	ppos = float3(ppos.x * p.z, ppos.y * p.z, p.z); //反透视除法
+	
+	//反透视除法后得到了摄像机坐标
+	camPos = mul(ip, float4(ppos,ppos.z));
+	
+	//下面就是从相机坐标转换到世界坐标空间
+	float3 worldPos=mul(iv,float4(camPos,1)).xyz; 
+	
+	//得到的坐标为世界坐标
+	return worldPos;
+	
+	
 }
 //检测点击点在哪个面片里面
 void CheckClickPoint(uint3 id)
 {
-  clickPointsBuff[0].picIndex = -1; //重置索引
+	clickPointsBuff[0].picIndex = -1; //重置索引
 
-  if (clickPoint.z >= 100000)
-  return;
-  
-  float4 pos = positionBuffer[id.x].position;
+	if (clickPoint.z > 100000)return;
+	
+	float4 pos = positionBuffer[id.x].position;
 
-  float4 velocity = positionBuffer[id.x].velocity;
+	float3 toCameraDir =  normalize( _WorldSpaceCameraPos.xyz - pos.xyz);
 
-  //  if(velocity.x>0)return;//值允许第一层有点击行为
+	float3 cameraDir = normalize(v[2].xyz);
 
-  float alpha = depthBuffer[velocity.x].alpha;
+	float dotDir = dot(cameraDir,toCameraDir);
 
-  if (alpha < 1)
-  return; // 在第一排的深度才可以点击，用透明度判断是否在第一排 
-  
-  //float2 leftDownP2, float2 leftUpP1, float2 rightDownP3, float2 rightUpP4, float2 p
-  //默认图片大小为长宽为1，一半就是0.5，
-  float2 leftDown = pos.xy + float2(-0.5, -0.5);
+	if(dotDir<0) return;//如果在摄像机的后面，则不进行计算
 
-  float2 leftUp = pos.xy + float2(-0.5, 0.5);
+	
 
-  float2 rightDown = pos.xy + float2(0.5, -0.5);
+	float4 velocity = positionBuffer[id.x].velocity;
 
-  float2 rightUp = pos.xy + float2(0.5, 0.5);
+	//  if(velocity.x>0)return;//值允许第一层有点击行为
+	
+	float alpha =  depthBuffer[velocity.x].alpha;  
 
-  bool isContains = ContainsQuadrangle(leftDown, leftUp, rightDown, rightUp, clickPoint.xy);
-  
-  if (isContains)
-  {
-    // positionBuffer[id.x].position.w=2;
-    clickPointsBuff[0] = positionBuffer[id.x];
-    clickPointsBuff[0].moveDir = ScreenToWorld(float3(400, 500, 10));
-  }
+	float3 initialVelocity = positionBuffer[id.x].initialVelocity;//获取宽高
+
+	//分别取得四个顶点的局部坐标，目前不考虑自身旋转
+
+	float3 leftDown = float3(-0.5f * initialVelocity.x, -0.5f * initialVelocity.y,0) * pos.w;
+
+	float3 leftUp = float3(-0.5f* initialVelocity.x, 0.5f * initialVelocity.y,0)* pos.w;
+
+	float3 rightDown =  float3(0.5f* initialVelocity.x, -0.5f * initialVelocity.y,0)* pos.w;
+
+	float3 rightUp = float3(0.5f* initialVelocity.x,0.5f* initialVelocity.y,0)* pos.w;
+
+	//分别取得四个点得到屏幕坐标，目前不考虑自身旋转
+
+	float2 screenLeftDown = WorldToScreenPos2(pos.xyz + leftDown);
+
+	float2 screenLeftUp = WorldToScreenPos2(pos.xyz + leftUp);
+
+	float2 screenRightDown = WorldToScreenPos2(pos.xyz + rightDown);
+	
+	float2 screenRightUp = WorldToScreenPos2(pos.xyz + rightUp);
+
+	// float2 screenCenterPos = WorldToScreenPos2(pos.xyz);
+
+	// float dis = length(screenCenterPos,clickPoint.xy);
+
+	bool isContains = ContainsQuadrangle(screenLeftDown, screenLeftUp, screenRightDown, screenRightUp, clickPoint.xy);
+	
+	if (isContains)
+	{
+		clickPointsBuff[0] = positionBuffer[id.x];
+		AppendBuff.Append(positionBuffer[id.x]);
+		
+	}
 }
 void LerpTex(uint3 id)
 {
 
-  float4 pos = positionBuffer[id.x].position;
+	float4 pos = positionBuffer[id.x].position;
 
-  if (pos.w == 0)
-  return; //初始数据w为0的不搞事情  
+	if (pos.w == 0)
+	return; //初始数据w为0的不搞事情  
 
-  //这里用velocity存储插值信息
-  float4 v = positionBuffer[id.x].originalPos;
-  float3 cache = positionBuffer[id.x].initialVelocity;
+	//这里用velocity存储插值信息
+	float4 v = positionBuffer[id.x].originalPos;
+	float3 cache = positionBuffer[id.x].initialVelocity;
 
-  if (id.x == rangeRot.x || id.x == rangeRot.y || id.x == rangeRot.z || id.x == rangeRot.w)
-  {
-    v.x = 1;
-    v.y = 0.75;
-  }
-  if (v.y == 0)
-  return; //y=0 没有运算意义,把不旋转的面片屏蔽掉
+	if (id.x == rangeRot.x || id.x == rangeRot.y || id.x == rangeRot.z || id.x == rangeRot.w)
+	{
+		v.x = 1;
+		v.y = 0.75;
+	}
+	if (v.y == 0)
+	return; //y=0 没有运算意义,把不旋转的面片屏蔽掉
 
-  v.z += deltaTime;
-  if (v.z >= v.x)//延长时间结束
-  {
-    //开始插值事务
-    float t = v.z - v.x; //得到插值时间
+	v.z += deltaTime;
+	if (v.z >= v.x)//延长时间结束
+	{
+		//开始插值事务
+		float t = v.z - v.x; //得到插值时间
 
-    if (v.y >= 0)//正向插值
-    {
-      v.w = t / v.y;
-      
-      if (v.w > 1)//重置插值数据
-      {
-        v = float4(v.x, -v.y, 0, 1); //-v.y 反向插值的证据
-        cache.x++; //记录改变次数
-      }
-    }
-    else //反向插值
-    {
-      v.w = (-v.y - t) / -v.y;
-      if (v.w <= 0)
-      {
-        v = float4(v.x, -v.y, 0, 0);
-        cache.x++; //记录改变次数
-      }
-    }
-  }
+		if (v.y >= 0)//正向插值
+		{
+			v.w = t / v.y;
+			
+			if (v.w > 1)//重置插值数据
+			{
+				v = float4(v.x, -v.y, 0, 1); //-v.y 反向插值的证据
+				cache.x++; //记录改变次数
+			}
+		}
+		else //反向插值
+		{
+			v.w = (-v.y - t) / -v.y;
+			if (v.w <= 0)
+			{
+				v = float4(v.x, -v.y, 0, 0);
+				cache.x++; //记录改变次数
+			}
+		}
+	}
 
-  //旋转两次后一切归位
-  if (cache.x >= 2)
-  {
-    v = float4(0, 0, 0, 0);
-    cache = float3(0, 0, 0);
-  }
+	//旋转两次后一切归位
+	if (cache.x >= 2)
+	{
+		v = float4(0, 0, 0, 0);
+		cache = float3(0, 0, 0);
+	}
 
 
-  positionBuffer[id.x].originalPos = v;
-  positionBuffer[id.x].initialVelocity = cache;
+	positionBuffer[id.x].originalPos = v;
+	positionBuffer[id.x].initialVelocity = cache;
 }
 [numthreads(thread_group_size_x, thread_group_size_y, 1)]
 void CSPositionKernel(uint3 id : SV_DispatchThreadID)
 {
-  float3 moveTarget = positionBuffer[id.x].moveTarget;
-  float4 position = positionBuffer[id.x].position;
-  float4 otherData = positionBuffer[id.x].originalPos;
-  float3 moveDir = positionBuffer[id.x].moveDir;
-  float4 velocity = positionBuffer[id.x].velocity;
-  int picIndex = positionBuffer[id.x].picIndex;
-  //uvOffset.xyz在状态0 存储的是当前的位置信息，uvOffset.w存储的是参数t,范围（0-1）
-  float4 uvOffset = positionBuffer[id.x].uvOffset;
-  float4 uv2Offset = positionBuffer[id.x].uv2Offset;
-  int stateCode = positionBuffer[id.x].stateCode;
+	float3 moveTarget = positionBuffer[id.x].moveTarget;
+	float4 position = positionBuffer[id.x].position;
+	float4 otherData = positionBuffer[id.x].originalPos;
+	float3 moveDir = positionBuffer[id.x].moveDir;
+	float4 velocity = positionBuffer[id.x].velocity;
+	int picIndex = positionBuffer[id.x].picIndex;
+	//uvOffset.xyz在状态0 存储的是当前的位置信息，uvOffset.w存储的是参数t,范围（0-1）
+	float4 uvOffset = positionBuffer[id.x].uvOffset;
+	float4 uv2Offset = positionBuffer[id.x].uv2Offset;
+	int stateCode = positionBuffer[id.x].stateCode;
 
-  uint count;
-  uint stride;
-  randomPosData.GetDimensions(count, stride);
-  
+	uint count;
+	uint stride;
+	randomPosData.GetDimensions(count, stride);
+	
 
-  if (stateCode == -1)
-  {
-    float4 rot = rotate_angle_axis(otherData.w / RadianRatio, otherData.xyz);
+	if (stateCode == -1)
+	{
+		float4 rot = rotate_angle_axis(otherData.w / RadianRatio, otherData.xyz);
 
-    float3 newVector = rotate_vector_at(moveDir, float3(0, 0, 0), rot);
+		float3 newVector = rotate_vector_at(moveDir, float3(0, 0, 0), rot);
 
-    moveTarget = srcPos + newVector;
+		moveTarget = srcPos + newVector;
 
-    float3 lerpVal = lerp(position.xyz, moveTarget, deltaTime);
-    
-    position.xyz = lerpVal;
-    moveDir = newVector;
-    
-    if (selectClass == (int) velocity.x && (int) velocity.w == (int) 1)
-    stateCode = 0; //进入被选中显示在前端的类别计算状态
+		float3 lerpVal = lerp(position.xyz, moveTarget, deltaTime);
+		
+		position.xyz = lerpVal;
+		moveDir = newVector;
+		
+		if (selectClass == (int) velocity.x && (int) velocity.w == (int) 1)
+		stateCode = 0; //进入被选中显示在前端的类别计算状态
 
-  }
-  else if(stateCode ==-2)//做类似银河系的圆周运动
-  {
-    float4 rot = rotate_angle_axis(uvOffset.w / RadianRatio, otherData.xyz);
+	}
+	else if(stateCode ==-2)//做类似银河系的圆周运动
+	{
+		float4 rot = rotate_angle_axis(uvOffset.w / RadianRatio, otherData.xyz);
 
-    float3 newVector = rotate_vector_at(uvOffset.xyz, float3(0, 0, 0), rot);
+		float3 newVector = rotate_vector_at(uvOffset.xyz, float3(0, 0, 0), rot);
 
-    
-    position.xyz =srcPos + newVector.xyz ;
+		
+		position.xyz =srcPos + newVector.xyz ;
 
-    uvOffset.xyz = newVector;
-
-
-
-    //moveTarget = srcPos + newVector;
+		uvOffset.xyz = newVector;
 
 
-  }
-  else if (stateCode == 0)//进入被选中显示在前端的类别计算状态
-  {
-    float3 pos = float3(0, 0, 0);
-    [loop]
-    for (int i = 0; i < count; i++)
-    {
-      if ((int) randomPosData[i].x == picIndex)
-      {
-        pos.xy = randomPosData[i].yz;
-        moveTarget = pos; //记录目标位置
-        //position.y = srcPos.y;
-        uvOffset.xyz = position.xyz; //记录当前位置
-        uvOffset.w = 0;
-        stateCode = 1; //说明已经赋值过了，可以做向摄像机走动的动作，进入飞到屏幕的状态
-        break;
-      }
-    }
-  }
-  else if (stateCode == 1)//进入被选中显示在前端的类别计算状态
-  {
-    float3 p0 = uvOffset.xyz;
-    float3 p2 = moveTarget;
-    
-    float x = p2.x + 100;
-    float y = srcPos.y;
-    float z = p2.z + (p0.z - p2.z) * 0.05; //求出z
 
-    float3 p1 = float3(x, y, z);
+		//moveTarget = srcPos + newVector;
 
-    float x1 = p2.x + 100;
-    float y1 = srcPos.y;
-    float z1 = p2.z + (p0.z - p2.z) * 0.85;
+		
+	}
+	else if (stateCode == 0)//进入被选中显示在前端的类别计算状态
+	{
+		float3 pos = float3(0, 0, 0);
+		[loop]
+		for (int i = 0; i < count; i++)
+		{
+			if ((int) randomPosData[i].x == picIndex)
+			{
+				pos.xy = randomPosData[i].yz;
+				moveTarget = pos; //记录目标位置
+				//position.y = srcPos.y;
+				uvOffset.xyz = position.xyz; //记录当前位置
+				uvOffset.w = 0;
+				stateCode = 1; //说明已经赋值过了，可以做向摄像机走动的动作，进入飞到屏幕的状态
+				break;
+			}
+		}
+	}
+	else if (stateCode == 1)//进入被选中显示在前端的类别计算状态
+	{
+		float3 p0 = uvOffset.xyz;
+		float3 p2 = moveTarget;
+		
+		float x = p2.x + 100;
+		float y = srcPos.y;
+		float z = p2.z + (p0.z - p2.z) * 0.05; //求出z
 
-    float p3 = float3(x1, y1, z1);
+		float3 p1 = float3(x, y, z);
 
-    
-    float3 p = CalculateCubicBezierPoint(uvOffset.w, p0, p1, p2);
+		float x1 = p2.x + 100;
+		float y1 = srcPos.y;
+		float z1 = p2.z + (p0.z - p2.z) * 0.85;
 
-    position.xyz = p;
+		float p3 = float3(x1, y1, z1);
 
-    uvOffset.w += deltaTime * 0.3f;
-    //说明结束了到屏幕的动画
-    if (uvOffset.w >= 1)
-    {
-      uvOffset.w = 1;
-      //进入在屏幕从右到左缓慢运动的状态
-      stateCode = 2; //进入在屏幕从右到左缓慢运动的状态
-      position.xyz = p2;
-    }
-  }
-  else if (stateCode == 2)//进入被选中显示在前端的类别计算状态
-  {
-    moveTarget.x -= 0.1;
-    float3 pos = lerp(position.xyz, moveTarget, deltaTime);
-    //边界检测
-    float RightBorder = (widthScale * 2) * velocity.z;
-    float LeftBorder = -velocity.z;
-    if (pos.x < LeftBorder - 5)
-    {
-      pos.x += RightBorder - 5;
-      moveTarget.x += RightBorder - 5;
-    }
-    //边界检测
+		
+		float3 p = CalculateCubicBezierPoint(uvOffset.w, p0, p1, p2);
 
-    position.xyz = pos;
-    if (hideClass == (int) velocity.x)//符合条件就返回圆球
-    {
-      stateCode = 3;
-    }
+		position.xyz = p;
 
-  }
-  else if (stateCode == 3)//进入被选中显示在前端的类别计算状态
-  {
-    float4 rot = rotate_angle_axis(otherData.w / RadianRatio, otherData.xyz);
+		uvOffset.w += deltaTime * 0.3f;
+		//说明结束了到屏幕的动画
+		if (uvOffset.w >= 1)
+		{
+			uvOffset.w = 1;
+			//进入在屏幕从右到左缓慢运动的状态
+			stateCode = 2; //进入在屏幕从右到左缓慢运动的状态
+			position.xyz = p2;
+		}
+	}
+	else if (stateCode == 2)//进入被选中显示在前端的类别计算状态
+	{
+		moveTarget.x -= 0.1;
+		float3 pos = lerp(position.xyz, moveTarget, deltaTime);
+		//边界检测
+		float RightBorder = (widthScale * 2) * velocity.z;
+		float LeftBorder = -velocity.z;
+		if (pos.x < LeftBorder - 5)
+		{
+			pos.x += RightBorder - 5;
+			moveTarget.x += RightBorder - 5;
+		}
+		//边界检测
 
-    float3 newVector = rotate_vector_at(moveDir, float3(0, 0, 0), rot);
+		position.xyz = pos;
+		if (hideClass == (int) velocity.x)//符合条件就返回圆球
+		{
+			stateCode = 3;
+		}
 
-    moveTarget = srcPos + newVector;
-    moveDir = newVector;
-    
-    // moveTarget = randomPosData[i].yzw;//记录目标位置
-    uvOffset.xyz = position.xyz; //记录当前位置
-    uvOffset.w = 0;
-    stateCode = 4; //说明已经赋值过了，可以做向摄像机走动的动作，进入飞到屏幕的状态
-    
-  }
-  else if (stateCode == 4)//进入被选中显示在前端的类别计算状态
-  {
-    float3 p0 = uvOffset.xyz;
-    float3 p2 = moveTarget;
+	}
+	else if (stateCode == 3)//进入被选中显示在前端的类别计算状态
+	{
+		float4 rot = rotate_angle_axis(otherData.w / RadianRatio, otherData.xyz);
 
-    float x = p2.x - 200;
-    float y = srcPos.y;
-    float z = p2.z - (p2.z - p0.z) * 0.05; //求出z
+		float3 newVector = rotate_vector_at(moveDir, float3(0, 0, 0), rot);
 
-    float3 p1 = float3(x, y, z);
+		moveTarget = srcPos + newVector;
+		moveDir = newVector;
+		
+		// moveTarget = randomPosData[i].yzw;//记录目标位置
+		uvOffset.xyz = position.xyz; //记录当前位置
+		uvOffset.w = 0;
+		stateCode = 4; //说明已经赋值过了，可以做向摄像机走动的动作，进入飞到屏幕的状态
+		
+	}
+	else if (stateCode == 4)//进入被选中显示在前端的类别计算状态
+	{
+		float3 p0 = uvOffset.xyz;
+		float3 p2 = moveTarget;
 
-    
+		float x = p2.x - 200;
+		float y = srcPos.y;
+		float z = p2.z - (p2.z - p0.z) * 0.05; //求出z
 
-    float3 p = CalculateCubicBezierPoint(uvOffset.w, p0, p1, p2);
+		float3 p1 = float3(x, y, z);
 
-    position.xyz = p;
+		
 
-    uvOffset.w += deltaTime * 0.3f;
-    //说明结束了到屏幕的动画
-    if (uvOffset.w >= 1)
-    {
-      uvOffset.w = 1;
-      //进入在屏幕从右到左缓慢运动的状态
-      stateCode = -1; //进入在屏幕从右到左缓慢运动的状态
-      position.xyz = p2;
-    }
-  }
+		float3 p = CalculateCubicBezierPoint(uvOffset.w, p0, p1, p2);
 
-  positionBuffer[id.x].velocity = velocity;
-  positionBuffer[id.x].stateCode = stateCode;
-  positionBuffer[id.x].moveDir = moveDir;
-  positionBuffer[id.x].moveTarget = moveTarget;
-  positionBuffer[id.x].position = position;
-  positionBuffer[id.x].originalPos = otherData;
-  positionBuffer[id.x].uvOffset = uvOffset;
-  positionBuffer[id.x].uv2Offset = uv2Offset;
-  
-  
+		position.xyz = p;
+
+		uvOffset.w += deltaTime * 0.3f;
+		//说明结束了到屏幕的动画
+		if (uvOffset.w >= 1)
+		{
+			uvOffset.w = 1;
+			//进入在屏幕从右到左缓慢运动的状态
+			stateCode = -1; //进入在屏幕从右到左缓慢运动的状态
+			position.xyz = p2;
+		}
+	}
+
+	positionBuffer[id.x].velocity = velocity;
+	positionBuffer[id.x].stateCode = stateCode;
+	positionBuffer[id.x].moveDir = moveDir;
+	positionBuffer[id.x].moveTarget = moveTarget;
+	positionBuffer[id.x].position = position;
+	positionBuffer[id.x].originalPos = otherData;
+	positionBuffer[id.x].uvOffset = uvOffset;
+	positionBuffer[id.x].uv2Offset = uv2Offset;
+	
+
+	CheckClickPoint(id.x);
 }
 
 //位置变换  
@@ -395,5 +497,5 @@ void CSPositionKernel(uint3 id : SV_DispatchThreadID)
 void InitLerp(uint3 id : SV_DispatchThreadID)
 {
 
-  
+	
 }

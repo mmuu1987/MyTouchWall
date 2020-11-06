@@ -32,63 +32,29 @@ public enum UIState
 /// </summary>
 public class UIControl : MonoBehaviour
 {
-    /// <summary>
-    /// 荣誉墙按钮
-    /// </summary>
-    public Button HonorWallBtn;
-
-    /// <summary>
-    /// 公司介绍按钮
-    /// </summary>
-    public Button CompanyIntroductionBtn;
-
-    /// <summary>
-    /// 关闭公司介绍，私享传家  所共用的界面
-    /// </summary>
-    public Button CloseButton;
-    /// <summary>
-    /// 私享传家按钮
-    /// </summary>
-    public Button PrivateHeirsBtn;
-
-    public Button OutstandingStyleBtn;
-
-    public Button Btn2000_2009;
-
-    public Button Btn2010_2019;
-
-    public Button Btn2020;
-
-
-    public MultiDepthMotion MultiDepthMotion;
-
-    /// <summary>
-    /// 荣誉墙
-    /// </summary>
-    public RectTransform HonorWall;
-
-    public UIStateMachine _Machine;
 
     public Dictionary<UIState, UIStateFSM> DicUI;
 
-    public Sprite HonorWallBtnLeft;
-    public Sprite HonorWallBtnRight;
+    public CameraControl CameraControl;
+
+    public Slider Slider;
 
     private void Awake()
     {
-
-
-
         Screen.SetResolution(7680, 3240, true, 60);
-
-       
     }
     
 	// Use this for initialization
 	void Start () 
     {
+        Slider.onValueChanged.AddListener((arg0 =>
+        {
+            CameraControl.MoveForward(arg0);
+        }));
+
        
-	}
+
+    }
 	
 	// Update is called once per frame
 	void Update () {

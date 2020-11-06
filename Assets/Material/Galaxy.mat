@@ -65,15 +65,15 @@ Material:
     - _BumpScale: 1
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
-    - _Dis: 0.02
+    - _Dis: 0.005
     - _DstBlend: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
     - _Margin: 0.133
-    - _MaxDis: 30
+    - _MaxDis: 159.55
     - _Metallic: 0
-    - _MinDis: 1
+    - _MinDis: 20
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02

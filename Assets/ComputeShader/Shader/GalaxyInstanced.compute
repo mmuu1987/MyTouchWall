@@ -5,6 +5,7 @@
 #define thread_group_size_y 1
 #define P 3.141592653
 
+#include "UnityCG.cginc"
 #include "../GPUParticle.cginc"
 #include "../GPUParticleComputeCommon.cginc"
 #include "../../Common/Shaders/Math.cginc"
@@ -153,6 +154,22 @@ void CheckClickPoint(uint3 id)
     clickPointsBuff[0].moveDir = ScreenToWorld(float3(400, 500, 10));
   }
 }
+//把点转换到屏幕坐标，来判断点是否在屏幕里面
+float3  CheckClickPointInline(float4 position)
+{
+  float4  vertex = UnityObjectToClipPos(position);
+  
+  float4  screenPos = ComputeScreenPos(vertex);
+
+  screenPos.xy=screenPos.xy/screenPos.w;
+
+  float width = screenPos.x * _ScreenParams.x;
+
+  float height = screenPos.y * _ScreenParams.y;
+
+  return float3(width,height,0);
+
+}
 void LerpTex(uint3 id)
 {
 
@@ -276,6 +293,8 @@ void InitLerp(uint3 id : SV_DispatchThreadID)
   uint count;
   uint stride;
   randomPosData.GetDimensions(count, stride);
+
+
   
   position.xyz =srcPos + uvOffset.xyz ;
   

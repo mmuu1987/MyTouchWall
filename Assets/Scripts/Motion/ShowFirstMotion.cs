@@ -15,7 +15,7 @@ public class ShowFirstMotion : MotionInputMoveBase
 
     public Material CurMaterial;
 
-    
+
     public Canvas Canvas;
 
     public Vector3 SrcPos;
@@ -50,6 +50,8 @@ public class ShowFirstMotion : MotionInputMoveBase
     private ComputeBuffer _selectClassBuffer;
 
 
+    private ComputeBuffer _appendBuffer;
+
     /// <summary>
     /// 触摸数据int为id,vector,4为屏幕位置，加 点击的 时间点
     /// </summary>
@@ -57,19 +59,29 @@ public class ShowFirstMotion : MotionInputMoveBase
 
     private MultiDepthPictureMove _depthPictureMove;
 
-    private int _widthScale=1;
+    private int _widthScale = 1;
     protected override void Init()
     {
         base.Init();
-          
+
+        _clickPoint = Vector3.one * 1000000;//重置数据
+
         MotionType = MotionType.ShowFirstMotion;
         // Camera.main.fieldOfView = 30f;
         _touchIds = new Dictionary<int, ClickData>();
         PosAndDir[] datas = new PosAndDir[ComputeBuffer.count];
 
         ComputeBuffer.GetData(datas);
+        //点击缓存
+        _clickPointBuff = new ComputeBuffer(1, Marshal.SizeOf(typeof(PosAndDir)));
+        PosAndDir[] clickPoint = { new PosAndDir(-1) };
+        _clickPointBuff.SetData(clickPoint);
 
-        SetValue(0f);
+        int stride = Marshal.SizeOf(typeof(PosAndDir));
+        Debug.Log("占位宽是 " + stride);
+        _appendBuffer = new ComputeBuffer(ComputeBuffer.count, stride, ComputeBufferType.Append);//定好这个容器的容量，大小为ComputeBuffer.count
+        _appendBuffer.SetCounterValue(0);
+
 
 
         for (int i = 0; i < datas.Length; i++)
@@ -88,7 +100,7 @@ public class ShowFirstMotion : MotionInputMoveBase
             Vector4 otherData = new Vector4();
             otherData.w = r;//存储半径
             int randomxyz = Random.Range(1, 8);
-            float speed = Random.Range(0.015f, 0.1f);
+            float speed =  Random.Range(0.0005f, 0.001f);
 
             //speed = 0.05f;
             randomxyz = 5;
@@ -127,7 +139,7 @@ public class ShowFirstMotion : MotionInputMoveBase
 
             Vector2 galaxy = TextureInstanced.Instance.GalaxyPosList[i];
             float galaxyY = Random.Range(-10f, 10f);
-            Vector3 galaxyVector3 = new Vector3(galaxy.x,galaxyY,galaxy.y) *10f;
+            Vector3 galaxyVector3 = new Vector3(galaxy.x, galaxyY, galaxy.y) * 10f;
 
             //存储银河信息恒星的大概位置信息
             datas[i].uvOffset = new Vector4(galaxyVector3.x, galaxyVector3.y, galaxyVector3.z, 0.1f);
@@ -160,7 +172,7 @@ public class ShowFirstMotion : MotionInputMoveBase
             int tempVal = level;
             datas[i].velocity = new Vector4(tempVal, 1f, _screenPosRightDown.x, isRest);
 
-            datas[i].stateCode = -2;
+            datas[i].stateCode = -1;
         }
 
 
@@ -173,6 +185,8 @@ public class ShowFirstMotion : MotionInputMoveBase
 
         ComputeBuffer.SetData(datas);
         ComputeShader.SetBuffer(dispatchID, "positionBuffer", ComputeBuffer);
+        ComputeShader.SetBuffer(dispatchID, "clickPointsBuff", _clickPointBuff);
+        ComputeShader.SetBuffer(dispatchID, "AppendBuff", _appendBuffer);
 
         ComputeShader.SetFloat("Width", Screen.width);
         ComputeShader.SetFloat("Height", Screen.height);
@@ -183,7 +197,8 @@ public class ShowFirstMotion : MotionInputMoveBase
         ComputeShader.SetFloat("m11", camMatri.m11);
         ComputeShader.SetVector("camPos", Camera.main.transform.position);
 
-        TextureInstanced.Instance.CurMaterial.SetBuffer("positionBuffer", ComputeBuffer); 
+        TextureInstanced.Instance.CurMaterial.SetBuffer("positionBuffer", ComputeBuffer);
+
         TextureInstanced.Instance.CurMaterial.SetTexture("_TexArr", TextureInstanced.Instance.TexArr);
 
 
@@ -226,10 +241,103 @@ public class ShowFirstMotion : MotionInputMoveBase
     }
     protected override void Dispatch(ComputeBuffer system)
     {
+
+        if (_clickPoint.z > 0)
+            _clickPoint = Vector3.one * 1000000;
+
+        //_depthPictureMove.Excute(temp);
+
+
+        ComputeShader.SetVector("clickPoint", _clickPoint);
+
         ComputeShader.SetFloat("deltaTime", Time.deltaTime);
         ComputeShader.SetVector("srcPos", SrcPos);
+        Matrix4x4 v = Camera.main.worldToCameraMatrix;
+        Matrix4x4 p = Camera.main.projectionMatrix;
 
-       base. Dispatch(dispatchID, system);
+        ComputeShader.SetMatrix("v", v);
+        ComputeShader.SetMatrix("p", p);
+        ComputeShader.SetMatrix("ip", p.inverse);
+        ComputeShader.SetMatrix("iv", v.inverse);
+
+
+        base.Dispatch(dispatchID, system);
+
+
+        if (_clickPoint.z < 1000000) //相当于有点击事件才触发 
+        {
+
+            PosAndDir[] datas = { new PosAndDir(-1) };
+            _clickPointBuff.GetData(datas);
+            int index = datas[0].picIndex;
+            Debug.Log("得到的图片index is  " + index);
+
+
+
+
+
+            var countBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.IndirectArguments);
+            ComputeBuffer.CopyCount(_appendBuffer, countBuffer, 0);
+            //通过这个方法拿到第一个数据。
+
+            int[] counter = { 0 };
+            countBuffer.GetData(counter);
+
+            int count = counter[0];
+
+            Debug.Log("count: " + count);
+
+
+            var data = new PosAndDir[count];
+            _appendBuffer.GetData(data);
+            if (data.Length > 0)
+                Debug.Log("data length: " + data.Length + "   得到的图片index is" + data[0].bigIndex);
+            else Debug.Log("data length: " + 0);
+            Sort(data);
+
+
+
+
+            if (data.Length > 0)
+            {
+               // PosAndDir pad = data[0];
+               
+                PictureHandle.Instance.GetYearInfo(data[0], Canvas.transform);
+            }
+            _clickPoint = Vector3.one * 1000000;//重置数据
+            _appendBuffer.SetCounterValue(0);
+            countBuffer.Dispose();
+            // _appendBuffer.Release();
+
+        }
+
+
+
+
+    }
+
+    private void Sort(PosAndDir[] data)
+    {
+
+        for (int i = 0; i < data.Length - 1; i++)
+        {
+            for (int j = 0; j < data.Length - 1 - i; j++)
+            {
+
+                if (!data[j].Sort(data[j + 1]))
+                {
+                    PosAndDir temp = data[j];
+                    data[j] = data[j + 1];
+                    data[j + 1] = temp;
+                }
+            }
+        }
+    }
+    private IEnumerator WaitTime(Action action)
+    {
+        yield return new WaitForEndOfFrame();
+        if (action != null) action();
+
     }
     public override void ExitMotion()
     {
@@ -274,7 +382,7 @@ public class ShowFirstMotion : MotionInputMoveBase
             // Debug.Log(temp);
             if (temp <= 0.5f)
             {
-                // Debug.Log("产生点击事件");
+                Debug.Log("产生点击事件");
                 _clickPoint = new Vector3(eventData.position.x, eventData.position.y, -1);//-1表示有点击事件产生
             }
             _touchIds.Remove(eventData.pointerId);
@@ -346,7 +454,7 @@ public class ShowFirstMotion : MotionInputMoveBase
 
         temps = new List<Vector4>();
 
-       // Debug.Log(_widthScale + "    " + indexs.Count + "   " + _randomPos.Count);
+        // Debug.Log(_widthScale + "    " + indexs.Count + "   " + _randomPos.Count);
         for (int i = 0; i < _randomPos.Count; i++)
         {
             int index = -1;//图片索引
@@ -363,7 +471,7 @@ public class ShowFirstMotion : MotionInputMoveBase
             }
 
 
-            temps.Add(new Vector4(index, _randomPos[i].x + _screenPosLeftDown.x, _randomPos[i].y + _screenPosLeftDown.y + heightTmep,1f));
+            temps.Add(new Vector4(index, _randomPos[i].x + _screenPosLeftDown.x, _randomPos[i].y + _screenPosLeftDown.y + heightTmep, 1f));
         }
         //打散按顺序排列的数据
         for (int i = 0; i < temps.Count; i++)
@@ -380,13 +488,13 @@ public class ShowFirstMotion : MotionInputMoveBase
         ComputeShader.SetInt("selectClass", _selectClass);
         ComputeShader.SetInt("hideClass", _hideClass);
 
-        if (_selectClassBuffer!=null)
+        if (_selectClassBuffer != null)
             _selectClassBuffer.Release();
         _selectClassBuffer = new ComputeBuffer(temps.Count, 16);
         _selectClassBuffer.SetData(temps.ToArray());
         ComputeShader.SetBuffer(dispatchID, "randomPosData", _selectClassBuffer);
         ComputeShader.SetInt("widthScale", _widthScale);
-        
+
         Dispatch(ComputeBuffer);
     }
 
@@ -394,11 +502,11 @@ public class ShowFirstMotion : MotionInputMoveBase
     {
         _hideClass = classIndex;
         _selectClass = -1;
-     
+
         ComputeShader.SetInt("selectClass", _selectClass);
         ComputeShader.SetInt("hideClass", _hideClass);
 
-      
+
         Dispatch(ComputeBuffer);
     }
     //private void OnGUI()

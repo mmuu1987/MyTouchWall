@@ -32,4 +32,4 @@ Material:
     m_Colors:
     - _BGColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _WHScale: {r: 0.19833946, g: 0.19908428, b: 1, a: 1}
+    - _WHScale: {r: 0.24430084, g: 0.24055481, b: 1, a: 1}

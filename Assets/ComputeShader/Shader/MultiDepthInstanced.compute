@@ -1,47 +1,26 @@
 ﻿#pragma kernel CSPositionKernel
 #pragma kernel InitLerp
- 
-
-
- #define thread_group_size_x 64
- #define thread_group_size_y 1
- #define P 3.141592653
 
 
 
-
-  struct PosAndDir
-{
-        float4 position;
-        float4 velocity;
-		float3 initialVelocity;
-        float4 originalPos;
-		float3 moveTarget;
-		float3 moveDir;
-		float2 indexRC;
-		int picIndex;
-        int bigIndex;
-        float4 uvOffset; 
-	    float4 uv2Offset; 
-};
+#define thread_group_size_x 64
+#define thread_group_size_y 1
+#define P 3.141592653
 
 
+
+
+
+
+#include "UnityCG.cginc"
+#include "../GPUParticle.cginc"
 #include "../GPUParticleComputeCommon.cginc"
-
-  struct DepthInfo
-{
-     int originalDepth;
-	 float toDepth;
-	 float originalScal;
-	 float handleDepth;
-	 float scale;
-     float alpha;
-	
-};
+#include "../../Common/Shaders/Math.cginc"
+#include "../../Common/Shaders/Random.cginc"
 
 
-#include "Assets/Common/Shaders/Math.cginc"
-#include "Assets/Common/Shaders/Random.cginc"
+
+
 
 
 
@@ -51,7 +30,7 @@ RWStructuredBuffer<DepthInfo> depthBuffer;
 //多个点击点的运动
 RWStructuredBuffer<float3>  clicks;
 
-
+AppendStructuredBuffer<PosAndDir> AppendBuff;
 
 
 
@@ -77,103 +56,175 @@ float m11;
 
 float3 camPos;
 
+
+//视矩阵，也就是世界到摄像机的矩阵，由C#传递过来
+float4x4 v;
+//投影矩阵，也就是摄像机到屏幕的矩阵，由C#传递过来
+float4x4 p;
+//视矩阵的逆矩阵，也就是摄像机到世界的矩阵，由C#传递过来
+float4x4 iv;
+//投影矩阵的逆矩阵，也就是屏幕到摄像机的的矩阵，由C#传递过来
+float4x4 ip;
+
 //把屏幕坐标转成世界坐标，不支持相机旋转
 float3 ScreenToWorld(float3 p)
 {
-       float px = p.x /Width;
+  float px = p.x /Width;
 
-        px = (px - 0.5f) / 0.5f;
+  px = (px - 0.5f) / 0.5f;
 
-        float py = p.y / Height;
+  float py = p.y / Height;
 
-        py = (py - 0.5f) / 0.5f;
+  py = (py - 0.5f) / 0.5f;
 
-        float3 ppos = float3(px, py, p.z);//得到了齐次坐标
+  float3 ppos = float3(px, py, p.z);//得到了齐次坐标
 
-        ppos = float3(ppos.x * p.z, ppos.y * p.z, p.z);//反透视除法
+  ppos = float3(ppos.x * p.z, ppos.y * p.z, p.z);//反透视除法
 
-        float z1 = ppos.z / m32;
+  float z1 = ppos.z / m32;
 
-        float x1 = ppos.x / m00;
+  float x1 = ppos.x / m00;
 
-        float y1 = ppos.y / m11;
+  float y1 = ppos.y / m11;
 
 
-		//相机转世界坐标
-		x1 = camPos.x+x1;
-		y1 = camPos.y+y1;
-		z1 = camPos.z-z1;
+  //相机转世界坐标
+  x1 = camPos.x+x1;
+  y1 = camPos.y+y1;
+  z1 = camPos.z-z1;
 
-		//得到的坐标为世界坐标
-		return float3(x1,y1,z1);
+  //得到的坐标为世界坐标
+  return float3(x1,y1,z1);
 
+
+}
+//把屏幕坐标转成世界坐标，支持相机旋转
+float3 ScreenToWorldMatrix(float3 p)
+{float px = p.x / Width;
+
+  px = (px - 0.5f) / 0.5f;
+
+  float py = p.y / Height;
+
+  py = (py - 0.5f) / 0.5f;
+
+  float3 ppos = float3(px, py, p.z); //得到了齐次坐标
+
+  ppos = float3(ppos.x * p.z, ppos.y * p.z, p.z); //反透视除法
+
+  //反透视除法后得到了摄像机坐标
+  camPos = mul(ip, float4(ppos,ppos.z));
+
+  //下面就是从相机坐标转换到世界坐标空间
+  float3 worldPos=mul(iv,float4(camPos,1)).xyz; 
+
+  //得到的坐标为世界坐标
+  return worldPos;
+
+
+}
+
+//把屏幕坐标转成世界坐标，支持相机旋转
+float3 ScreenToWorldMatrix2(float3 p)
+{
+  
+  float4 clipPos = float4(p, 1.0);
+  clipPos.xyz = 2.0f * clipPos.xyz - 1.0f;
+  float4 camPos = mul(ip, clipPos);
+  camPos.xyz /= camPos.w;
+  camPos.z *= -1;
+  float3 worldPos=mul(iv, camPos).xyz;  
+  //得到的坐标为世界坐标
+  return worldPos;
+
+
+}
+
+//把点转换到屏幕坐标，来判断点是否在屏幕里面,目前发现无法用到unityCG.cginc里面的矩阵，不知为何
+float2  WorldToScreenPos2(float3 pos)
+{
+  float4x4 vp = mul(p,v); 
+
+  float4  vertex = mul(vp, float4(pos, 1.0));
+  
+  float4  screenPos = ComputeScreenPos(vertex);
+
+  screenPos.xy=screenPos.xy/screenPos.w;
+
+  float width = screenPos.x * _ScreenParams.x;
+
+  float height = screenPos.y * _ScreenParams.y;
+
+  return float3(width,height,0);
 
 }
 //世界坐标转屏幕坐标 不支持相机旋转
 float3 WorldToScreenPos(float3 worldPos)
 {
-        float z = camPos.z - worldPos.z;
+  float z = camPos.z - worldPos.z;
 
-        float x = worldPos.x - camPos.x;
+  float x = worldPos.x - camPos.x;
 
-		float y = worldPos.y - camPos.y;
+  float y = worldPos.y - camPos.y;
 
-        float3 temp1 = float3(x,y,z);
+  float3 temp1 = float3(x,y,z);
 
-        float z1 = temp1 .z * m32;
+  float z1 = temp1 .z * m32;
 
-        float x1 = temp1 .x * m00;
+  float x1 = temp1 .x * m00;
 
-        float y1 = temp1 .y* m11;
+  float y1 = temp1 .y* m11;
 
-        float3 ppos = float3(x1 / z1, y1 / z1, z1);//透视除法
+  float3 ppos = float3(x1 / z1, y1 / z1, z1);//透视除法
 
-        float x2 = ppos.x*0.5f + 0.5f;
+  float x2 = ppos.x*0.5f + 0.5f;
 
-        float y2 = ppos.y*0.5f + 0.5f;
+  float y2 = ppos.y*0.5f + 0.5f;
 
-        x2 = x2*Width;
+  x2 = x2*Width;
 
-        y2 = y2*Height;
+  y2 = y2*Height;
 
 
-      return float3(x2,y2,0);
+  return float3(x2,y2,0);
 }
 //检测点击点在哪个面片里面
 void CheckClickPoint(uint3 id)
 {
-   clickPointsBuff[0].picIndex=-1;//重置索引
+  clickPointsBuff[0].picIndex=-1;//重置索引
 
-   if(clickPoint.z>=100000)return;
+  if(clickPoint.z>=100000)return;
 
-   float4 pos = positionBuffer[id.x].position;
+  float4 pos = positionBuffer[id.x].position;
 
-   float4 velocity = positionBuffer[id.x].velocity;
+  float4 velocity = positionBuffer[id.x].velocity;
 
- //  if(velocity.x>0)return;//值允许第一层有点击行为
+  //  if(velocity.x>0)return;//值允许第一层有点击行为
 
-    float alpha = depthBuffer[velocity.x].alpha;
+  float alpha = depthBuffer[velocity.x].alpha;
 
-	if(alpha<1) return;// 在第一排的深度才可以点击，用透明度判断是否在第一排
+  if(alpha<1) return;// 在第一排的深度才可以点击，用透明度判断是否在第一排
+  
+  //float2 leftDownP2, float2 leftUpP1, float2 rightDownP3, float2 rightUpP4, float2 p
+  //默认图片大小为长宽为1，一半就是0.5
+  float2 leftDown = pos.xy + float2(-0.5,-0.5);
+
+  float2 leftUp = pos.xy + float2(-0.5,0.5);
+
+  float2 rightDown = pos.xy + float2(0.5,-0.5);
+
+  float2 rightUp = pos.xy + float2(0.5,0.5);
+
+  bool   isContains = ContainsQuadrangle(leftDown,leftUp,rightDown,rightUp,clickPoint);
+  clickPointsBuff[0].moveDir =  ScreenToWorldMatrix(float3(400,500,20));
+  if(isContains)
+  {
+    // positionBuffer[id.x].position.w=2;
+    clickPointsBuff[0] = positionBuffer[id.x];
+    AppendBuff.Append(positionBuffer[id.x]);
+    //AppendBuff.Append(positionBuffer[id.x+1]);
    
-   //float2 leftDownP2, float2 leftUpP1, float2 rightDownP3, float2 rightUpP4, float2 p
-   //默认图片大小为长宽为1，一半就是0.5
-   float2 leftDown = pos.xy + float2(-0.5,-0.5);
-
-   float2 leftUp = pos.xy + float2(-0.5,0.5);
-
-   float2 rightDown = pos.xy + float2(0.5,-0.5);
-
-   float2 rightUp = pos.xy + float2(0.5,0.5);
-
-   bool   isContains = ContainsQuadrangle(leftDown,leftUp,rightDown,rightUp,clickPoint);
-
-   if(isContains)
-   {
-   // positionBuffer[id.x].position.w=2;
-	 clickPointsBuff[0] = positionBuffer[id.x];
-	 clickPointsBuff[0].moveDir = ScreenToWorld(float3(400,500,10));
-   }
+  } 
 }
 
 
@@ -185,54 +236,54 @@ void LerpTex(uint3 id )
 
   if(pos.w==0)return;//初始数据w为0的不搞事情  
 
-   //这里用velocity存储插值信息
-   float4 v = positionBuffer[id.x].originalPos;
-   float3 cache =  positionBuffer[id.x].initialVelocity;
+  //这里用velocity存储插值信息
+  float4 v = positionBuffer[id.x].originalPos;
+  float3 cache =  positionBuffer[id.x].initialVelocity;
 
   if(id.x== rangeRot.x ||id.x==rangeRot.y || id.x==rangeRot.z || id.x==rangeRot.w)
   { 
-	   v.x = 1;
-	   v.y=0.75;
+    v.x = 1;
+    v.y=0.75;
   }
-   if(v.y==0)return;//y=0 没有运算意义,把不旋转的面片屏蔽掉
+  if(v.y==0)return;//y=0 没有运算意义,把不旋转的面片屏蔽掉
 
-   v.z+=deltaTime;
-   if(v.z>=v.x)//延长时间结束
-   {
-     //开始插值事务
-     float t = v.z -v.x ;//得到插值时间
+  v.z+=deltaTime;
+  if(v.z>=v.x)//延长时间结束
+  {
+    //开始插值事务
+    float t = v.z -v.x ;//得到插值时间
 
-	 if(v.y>=0)//正向插值
-	 {
-	   v.w = t/v.y;
-	  
-	   if(v.w>1)//重置插值数据
-	   {
-	    v = float4(v.x,-v.y,0,1);//-v.y 反向插值的证据
-		cache.x++;//记录改变次数
-	   }
-	 }
-	 else //反向插值
-	 {
-	   v.w = (-v.y-t)/-v.y;
-	   if(v.w<=0)
-	   {
-	     v = float4(v.x,-v.y,0,0);
-		 cache.x++;//记录改变次数
-	   }
-	 }
-   }
+    if(v.y>=0)//正向插值
+    {
+      v.w = t/v.y;
+      
+      if(v.w>1)//重置插值数据
+      {
+        v = float4(v.x,-v.y,0,1);//-v.y 反向插值的证据
+        cache.x++;//记录改变次数
+      }
+    }
+    else //反向插值
+    {
+      v.w = (-v.y-t)/-v.y;
+      if(v.w<=0)
+      {
+        v = float4(v.x,-v.y,0,0);
+        cache.x++;//记录改变次数
+      }
+    }
+  }
 
-   //旋转两次后一切归位
-   if(cache.x>=2)
-   {
+  //旋转两次后一切归位
+  if(cache.x>=2)
+  {
     v = float4(0,0,0,0);
-	cache = float3(0,0,0);
-   }
+    cache = float3(0,0,0);
+  }
 
 
-	 positionBuffer[id.x].originalPos = v;
-	 positionBuffer[id.x].initialVelocity=cache ;
+  positionBuffer[id.x].originalPos = v;
+  positionBuffer[id.x].initialVelocity=cache ;
 }
 
 
@@ -240,96 +291,96 @@ void LerpTex(uint3 id )
 void OldMethods(uint3 id )
 {
 
-   float4 pos = positionBuffer[id.x].position;
+  float4 pos = positionBuffer[id.x].position;
 
-   if(pos.w==0)return;//初始数据w为0的不搞事情  
+  if(pos.w==0)return;//初始数据w为0的不搞事情  
 
-   float4 velocity = positionBuffer[id.x].velocity;
+  float4 velocity = positionBuffer[id.x].velocity;
 
-   float3 moveTarget = positionBuffer[id.x].moveTarget;
+  float3 moveTarget = positionBuffer[id.x].moveTarget;
 
-   float z = depthBuffer[velocity.x].handleDepth;
+  float z = depthBuffer[velocity.x].handleDepth;
 
-   float alpha = depthBuffer[velocity.x].alpha;
+  float alpha = depthBuffer[velocity.x].alpha;
 
-   float scale = depthBuffer[velocity.x].scale;
-   
-   float3 depthDir = float3(0,0,z);
-
-   float3 moveDir = float3(-0.0045,0,0);
-
-   moveTarget +=  moveDir;
-
-   float3 allDir = moveTarget +depthDir;
+  float scale = depthBuffer[velocity.x].scale;
   
-   float3 screenPos = WorldToScreenPos(pos);
+  float3 depthDir = float3(0,0,z);
 
-   float2 v1 = float2(screenPos.x, screenPos.y);
+  float3 moveDir = float3(-0.0045,0,0);
 
-   
-    //计算多点碰撞聚集运动的算法
-	//-------------------------
-    uint count;
-	uint stride; 
-	clicks.GetDimensions(count,stride);
-	int n=-1;//让下面的循环else 体里只执行一次，否则执行十次，不是我们想要的
-	
-	for (int i = 0; i < count; i++)
-	{
-	    if (clicks[i].z >= 1000) continue;
+  moveTarget +=  moveDir;
 
-	    float2 v2 =  float2(clicks[i].x, clicks[i].y);
-
-	   //如果有鼠标点击事件//CS代码那边，如果没有点击，点击点会移到 Vector3.one * 1000000位置
-       if(length(v1 - v2)<=dis)
-       {
-	     n=i;//如果有在这个范围的，则跳出循环
-		 break;
-       }
-	}
-
-	if(n>=0)//如果在某个触摸点半径范围，则吸引
-	{
-
-	  float3 float3V = float3(clicks[n].x, clicks[n].y, pos.z+10);
-	  float3 v3 = ScreenToWorld(float3V);
-	  float3 newPos = lerp(pos.xyz, v3, deltaTime);
-	  
-	  pos.xyz = newPos;
-	}
-    else
-	{
-	   pos= lerp(pos,float4(allDir,scale),deltaTime);
+  float3 allDir = moveTarget +depthDir;
   
-       velocity.y = EaseOutQuad(velocity.y,alpha,deltaTime);
-	}
-    //计算多点碰撞聚集运动的算法
-	//-------------------------
-   
+  float3 screenPos = WorldToScreenPos(pos);
+
+  float2 v1 = float2(screenPos.x, screenPos.y);
 
   
+  //计算多点碰撞聚集运动的算法
+  //-------------------------
+  uint count;
+  uint stride; 
+  clicks.GetDimensions(count,stride);
+  int n=-1;//让下面的循环else 体里只执行一次，否则执行十次，不是我们想要的
+  
+  for (int i = 0; i < count; i++)
+  {
+    if (clicks[i].z >= 1000) continue;
 
-   //边界检测
-   float RightBorder = velocity.z;
-   float LeftBorder = -RightBorder;
-   //if(pos.x<LeftBorder)pos.x += 2*RightBorder;
-   if(pos.x<LeftBorder)
-   {
+    float2 v2 =  float2(clicks[i].x, clicks[i].y);
+
+    //如果有鼠标点击事件//CS代码那边，如果没有点击，点击点会移到 Vector3.one * 1000000位置
+    if(length(v1 - v2)<=dis)
+    {
+      n=i;//如果有在这个范围的，则跳出循环
+      break;
+    }
+  }
+
+  if(n>=0)//如果在某个触摸点半径范围，则吸引
+  {
+
+    float3 float3V = float3(clicks[n].x, clicks[n].y, pos.z+10);
+    float3 v3 = ScreenToWorld(float3V);
+    float3 newPos = lerp(pos.xyz, v3, deltaTime);
+    
+    pos.xyz = newPos;
+  }
+  else
+  {
+    pos= lerp(pos,float4(allDir,scale),deltaTime);
+    
+    velocity.y = EaseOutQuad(velocity.y,alpha,deltaTime);
+  }
+  //计算多点碰撞聚集运动的算法
+  //-------------------------
+  
+
+  
+
+  //边界检测
+  float RightBorder = velocity.z;
+  float LeftBorder = -RightBorder;
+  //if(pos.x<LeftBorder)pos.x += 2*RightBorder;
+  if(pos.x<LeftBorder)
+  {
     pos.x -= 2*LeftBorder;
-	moveTarget.x-=2*LeftBorder;
-   }
-   //边界检测
+    moveTarget.x-=2*LeftBorder;
+  }
+  //边界检测
 
 
-   positionBuffer[id.x].position = pos;
+  positionBuffer[id.x].position = pos;
 
-   positionBuffer[id.x].moveTarget = moveTarget;
+  positionBuffer[id.x].moveTarget = moveTarget;
 
-   positionBuffer[id.x].velocity= float4(velocity.x,velocity.y,velocity.z,0);//保存新的透明值
+  positionBuffer[id.x].velocity= float4(velocity.x,velocity.y,velocity.z,0);//保存新的透明值
 
-   CheckClickPoint(id);
- //  LerpTex(id);
-   
+  CheckClickPoint(id);
+  //  LerpTex(id);
+  
 }
 
 
@@ -337,7 +388,7 @@ void OldMethods(uint3 id )
 void CSPositionKernel (uint3 id : SV_DispatchThreadID)
 {
   
-   OldMethods(id);
+  OldMethods(id);
   // LerpTex(id);
   
 }
@@ -347,5 +398,5 @@ void CSPositionKernel (uint3 id : SV_DispatchThreadID)
 void InitLerp (uint3 id : SV_DispatchThreadID)
 {
 
-   
+  
 }

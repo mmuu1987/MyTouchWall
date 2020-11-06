@@ -8,12 +8,11 @@
     _MinDis("MinDis",float ) = 1
     MySrcMode ("SrcMode", Float) = 0
     MyDstMode ("DstMode", Float) = 0
-    MyOff ("Off", Float) = 0
   }
   SubShader
   {
     Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" }
-    Lighting Off ZWrite  [MyOff]  Fog { Color (0,0,0,0) }
+    Lighting Off ZWrite Off Fog { Color (0,0,0,0) }
     Blend [MySrcMode] [MyDstMode]
     LOD 100
 

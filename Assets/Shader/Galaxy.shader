@@ -96,6 +96,8 @@
         #endif
         v2f o;
 
+        
+
         float3 initialVelocity = positionBuffer[instanceID].initialVelocity;//获取宽高
         
         float3 worldPos =  data.xyz;

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Security.AccessControl;
 using DG.Tweening;
@@ -33,6 +34,8 @@ public class Test : MonoBehaviour, IDragHandler, IEndDragHandler
 
     public Material CurMaterial;
 
+    public static event Action TestCall;
+
     // Use this for initialization
     void Start()
     {
@@ -47,7 +50,7 @@ public class Test : MonoBehaviour, IDragHandler, IEndDragHandler
             enabled = false;
             return;
         }
-
+       
         if (SystemInfo.copyTextureSupport == CopyTextureSupport.None ||
             !SystemInfo.supports2DArrayTextures)
         {

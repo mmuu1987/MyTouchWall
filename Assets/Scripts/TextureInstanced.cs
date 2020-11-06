@@ -85,6 +85,17 @@ public struct PosAndDir
         uv2Offset = new Vector4();
         stateCode = -1;
     }
+
+    /// <summary>
+    /// 跟另个数据进行排序
+    /// </summary>
+    public bool Sort(PosAndDir otherData)
+    {
+        if (this.position.z >= otherData.position.z) return false;
+        return true;
+    }
+
+   
 }
 
 
@@ -240,12 +251,16 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
 
     public List<Vector3> GalaxyPosList;
 
+    public Action<PointerEventData> DragAction;
+
+    public Action<PointerEventData> DragEndAction;
+
     private void Awake()
     {
         if (Instance != null) throw new UnityException("已经有单例了，不能重复赋值");
 
         Instance = this;
-        
+      
     }
 
     void Start()
@@ -268,7 +283,7 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
     }
 
 
-    void Update()
+    void LateUpdate()
     {
         InputManager.Instance.HandleInput();
         // UpdateBuffers();
@@ -477,11 +492,13 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
     public void OnDrag(PointerEventData eventData)
     {
         _delta = eventData.delta;
+        if (DragAction != null) DragAction(eventData);
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
         _delta = Vector2.zero;
+        if (DragEndAction != null) DragEndAction(eventData);
     }
 
 

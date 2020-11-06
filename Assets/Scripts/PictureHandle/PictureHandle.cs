@@ -136,7 +136,7 @@ public class PictureHandle : MonoBehaviour
 
            _info = Resources.Load<GameObject>("Prefabs/Info");
            //预制体缩放，后面用来做缩放动画
-          _info.transform.localScale = Vector3.one * 0.35f;
+          _info.transform.localScale = Vector3.one * 0.1f;
 
         IsInitEnd = true;
 
@@ -317,17 +317,17 @@ public class PictureHandle : MonoBehaviour
 
         RectTransform rectTransform = item.GetComponent<RectTransform>();
         // rectTransform.SetSiblingIndex(2);
-        rectTransform.DOScale(1f, 0.75f);
+        rectTransform.DOScale(0.35f, 0.75f);
         //rectTransform.DOLocalRotate(new Vector3(0f, 360, 0f), 1f, RotateMode.LocalAxisAdd).OnComplete((() =>
         //{
         //    item.RotEnd();
         //}));
         rectTransform.anchoredPosition = screenPos;
 
-        if (screenPos.y >= 2300f) screenPos.y = 2300f;
-        if (screenPos.y <= 1100f) screenPos.y = 1100f;
-        if (screenPos.x >= 6500f) screenPos.x = 6500f;
-        if (screenPos.x <= 1000f) screenPos.x = 1000f;
+        if (screenPos.y >= 800) screenPos.y = 800;
+        if (screenPos.y <= 250) screenPos.y = 250;
+        if (screenPos.x >= 1700f) screenPos.x = 1700f;
+        if (screenPos.x <= 200f) screenPos.x = 200f;
 
 
         rectTransform.DOAnchorPos(screenPos, 0.35f);

@@ -565,7 +565,14 @@ public static class Common
 
                     float v1 = dis / r;
 
-                    float h = (1 - v1)*100;//* UnityEngine.Random.Range(-r /scale/25, r / scale/25);
+                    //float h = (1 - v1)*100;//* UnityEngine.Random.Range(-r /scale/25, r / scale/25);
+
+                    float h = UnityEngine.Random.Range(-r / scale / 25, r / scale / 25);
+
+                    h = h / (dis/10);
+
+                    if (h >= 2) h = 2;
+                    if (h <= -2) h = -2;
 
                     posList.Add(new Vector3(pos.x,h,pos.y));
 

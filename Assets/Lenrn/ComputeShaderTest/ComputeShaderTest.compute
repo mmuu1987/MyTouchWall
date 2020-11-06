@@ -1,0 +1,23 @@
+﻿#pragma kernel CSMain
+
+AppendStructuredBuffer<int> appendBuffer;
+ConsumeStructuredBuffer<int> consumeBuffer;
+
+#include "UnityCG.cginc"
+[numthreads(16,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    
+    if (id.x == 2)
+    {
+      
+     appendBuffer.Append( _WorldSpaceCameraPos.x);
+     appendBuffer.Append( _WorldSpaceCameraPos.y);
+     appendBuffer.Append( _WorldSpaceCameraPos.z);
+    }
+
+    //if (id.x > 2)
+    //{
+    //    appendBuffer.Append(id.x);
+    //}
+}
