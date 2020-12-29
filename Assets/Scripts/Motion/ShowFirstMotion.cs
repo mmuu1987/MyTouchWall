@@ -96,7 +96,6 @@ public class ShowFirstMotion : MotionInputMoveBase
             datas[i].moveTarget = dis;
 
             datas[i].moveDir = dir;//存储方向
-
             Vector4 otherData = new Vector4();
             otherData.w = r;//存储半径
             int randomxyz = Random.Range(1, 8);
