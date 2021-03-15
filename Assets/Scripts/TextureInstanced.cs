@@ -130,7 +130,11 @@ public enum MotionType
     /// <summary>
     /// 银河系运动
     /// </summary>
-    Galaxy
+    Galaxy,
+    /// <summary>
+    /// 流体运动
+    /// </summary>
+    Fluid
 }
 
 public enum TouchType
@@ -235,6 +239,8 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
 
     public GalaxyMotion GalaxyMotion;
 
+    public FluidMotion FluidMotion;
+
     public static TextureInstanced Instance;
 
     /// <summary>
@@ -314,6 +320,7 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
         ShowFirstMotion.ExitMotion();
         MultiDepthMotion.ExitMotion();
         GalaxyMotion.ExitMotion();
+        FluidMotion.ExitMotion();
         CubeMotion.StartMotion(this);
 
     }
@@ -325,6 +332,7 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
         MultiDepthMotion.ExitMotion();
         GalaxyMotion.ExitMotion();
         ShowFirstMotion.ExitMotion();
+        FluidMotion.ExitMotion();
         LoopMotion.StartMotion(this);
     }
 
@@ -334,6 +342,7 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
         LoopMotion.ExitMotion();
         ShowFirstMotion.ExitMotion();
         MultiDepthMotion.ExitMotion();
+        FluidMotion.ExitMotion();
         ClassiFicationMotion.StartMotion(this);
     }
     void UpdateMultiDepthMotion()
@@ -343,6 +352,7 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
         LoopMotion.ExitMotion();
         ShowFirstMotion.ExitMotion();
         ClassiFicationMotion.ExitMotion();
+        FluidMotion.ExitMotion();
         MultiDepthMotion.StartMotion(this);
         
     }
@@ -354,6 +364,7 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
         LoopMotion.ExitMotion();
         ClassiFicationMotion.ExitMotion();
         MultiDepthMotion.ExitMotion();
+        FluidMotion.ExitMotion();
         ShowFirstMotion.StartMotion(this);
     }
     void UpdateGalaxyMotion()
@@ -363,7 +374,18 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
         ClassiFicationMotion.ExitMotion();
         MultiDepthMotion.ExitMotion();
         ShowFirstMotion.ExitMotion();
+        FluidMotion.ExitMotion();
         GalaxyMotion.StartMotion(this);
+    }
+    void UpdateFluidMotion()
+    {
+        CubeMotion.ExitMotion();
+        LoopMotion.ExitMotion();
+        ClassiFicationMotion.ExitMotion();
+        MultiDepthMotion.ExitMotion();
+        ShowFirstMotion.ExitMotion();
+        FluidMotion.StartMotion(this);
+        GalaxyMotion.ExitMotion();
     }
 
     public void CubeType()
@@ -402,6 +424,9 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
                 break;
             case MotionType.Galaxy:
                 UpdateGalaxyMotion();
+                break;
+            case MotionType.Fluid:
+                UpdateFluidMotion();
                 break;
             default:
                 throw new ArgumentOutOfRangeException("type", type, null);
