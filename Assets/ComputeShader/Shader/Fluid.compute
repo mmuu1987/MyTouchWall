@@ -1,32 +1,38 @@
 ﻿#pragma kernel CSPositionKernel
- #pragma kernel InitLerp
- #define thread_group_size_x 64
- #define thread_group_size_y 1
- #define P 3.141592653
+#pragma kernel InitLerp
+#define thread_group_size_x 64
+#define thread_group_size_y 1
+#define P 3.141592653
+
+
+#include "UnityCG.cginc"
 
 
 
 
- struct FluidStruct
+
+struct FluidStruct
 {
-        float4 position;
-        float3 velocity;
-		float3 initialVelocity;
-		float3 fluidUp;
-		float3 fluidDown;
-		float4 oldPos;
-		float3 addvalUp;
-		float3 addvalDown;
-        int heardIndex;
-        float4 originalPos;
-		float4 freeMoveArg;
-		int delayFrame;
+  float4 position;
+  float3 velocity;
+  float3 initialVelocity;
+  float3 fluidUp;
+  float3 fluidDown;
+  float4 oldPos;
+  float3 addvalUp;
+  float3 addvalDown;
+  int heardIndex;
+  float4 originalPos;
+  float4 freeMoveArg;
+  int delayFrame;
 };
 
 RWStructuredBuffer<FluidStruct> positionBuffer;
 
+RWTexture2D<half2> Velocity;
+
 float _Dim;
-float _Time;
+
 float _DeltaTime;
 float3 _Pos;//球体位置
 float _Radius;//球体半径
@@ -35,378 +41,288 @@ float _Threshold;//弹性系数
 int _Column;
 float Seed;
 
+
+//视矩阵，也就是世界到摄像机的矩阵，由C#传递过来
+float4x4 v;
+//投影矩阵，也就是摄像机到屏幕的矩阵，由C#传递过来
+float4x4 p;
+//视矩阵的逆矩阵，也就是摄像机到世界的矩阵，由C#传递过来
+float4x4 iv;
+//投影矩阵的逆矩阵，也就是屏幕到摄像机的的矩阵，由C#传递过来
+float4x4 ip;
+
+
+//把世界坐标点转换到屏幕坐标，支持相机旋转
+//ComputeScreenPos虽然为unityCG.cginc的方法，但是不涉及到矩阵，所以可以应用该方法
+float2  WorldToScreenPos2(float3 pos)
+{
+  float4x4 vp = mul(p,v); 
+  
+  float4  vertex = mul(vp, float4(pos, 1.0));
+  
+  float4  screenPos = ComputeScreenPos(vertex);
+  
+  screenPos.xy=screenPos.xy/screenPos.w;
+  
+  float width = screenPos.x * _ScreenParams.x;
+  
+  float height = screenPos.y * _ScreenParams.y;
+  
+  return float2(width,height);
+}
+
 float rand(in float2 uv)
 {
-	float2 noise = (frac(sin(dot(uv ,float2(12.9898,78.233)*2.0)) * 43758.5453));
-	return abs(noise.x + noise.y) * 0.5;
+  float2 noise = (frac(sin(dot(uv ,float2(12.9898,78.233)*2.0)) * 43758.5453));
+  return abs(noise.x + noise.y) * 0.5;
 }
 
 void rotate2D(inout float2 v, float r)
 {
-	float s, c;
-	sincos(r, s, c);
-	v = float2(v.x * c - v.y * s, v.x * s + v.y * c);
+  float s, c;
+  sincos(r, s, c);
+  v = float2(v.x * c - v.y * s, v.x * s + v.y * c);
 }
 
 //做自由落体运动
 void DownMove(uint3 id)
 {
-        float4 pos = positionBuffer[id.x].position;
+  float4 pos = positionBuffer[id.x].position;
 
-		float3 velocity = positionBuffer[id.x].velocity;
+  float3 velocity = positionBuffer[id.x].velocity;
 
-		velocity += _Gravity*_DeltaTime;
+  velocity += _Gravity*_DeltaTime;
 
-	    pos.xyz += velocity*_DeltaTime;
+  pos.xyz += velocity*_DeltaTime;
 
-		float d = distance(_Pos,pos.xyz);
+  float d = distance(_Pos,pos.xyz);
 
-		if(d<=_Radius)//撞上了
-		{
+  if(d<=_Radius)//撞上了
+  {
 
-		 float3 dir = normalize( pos.xyz - _Pos);
+    float3 dir = normalize( pos.xyz - _Pos);
 
-	     float3 value = dot(velocity, dir) * dir ;//弹力公式1
+    float3 value = dot(velocity, dir) * dir ;//弹力公式1
 
-	     velocity = (velocity - 2.0 * value * _Threshold);//弹力公式2 
+    velocity = (velocity - 2.0 * value * _Threshold);//弹力公式2 
 
-		 pos.xyz = _Pos + dir * _Radius;
-		}
+    pos.xyz = _Pos + dir * _Radius;
+  }
 
-		positionBuffer[id.x].velocity = velocity;
-	
-	    positionBuffer[id.x].position = pos;
-
-
+  positionBuffer[id.x].velocity = velocity;
+  
+  positionBuffer[id.x].position = pos;
 
 
-		int index = positionBuffer[id.x].heardIndex;
 
-		if(index>=0)//证明是线头
-		{
-		  if(pos.y<=-30)//证明线已经走出屏幕
-		  {
-		    //复位该线的所有组成物体
-			float x = (rand(float2(-pos.x,pos.x))-0.5)*2 *18;
-	        [loop]
-            for (int i = 0; i < _Column; i++)
-	        {
-			 // float4 opos = positionBuffer[index+i].originalPos;
-		      positionBuffer[index-i].position = positionBuffer[index+i].originalPos;//float4(x,opos.y,opos.z,opos.w);
-			  positionBuffer[index-i].velocity = 0;
-	        }
-		  }
-		}
+
+  int index = positionBuffer[id.x].heardIndex;
+
+  if(index>=0)//证明是线头
+  {
+    if(pos.y<=-30)//证明线已经走出屏幕
+    {
+      //复位该线的所有组成物体
+      float x = (rand(float2(-pos.x,pos.x))-0.5)*2 *18;
+      [loop]
+      for (int i = 0; i < _Column; i++)
+      {
+        // float4 opos = positionBuffer[index+i].originalPos;
+        positionBuffer[index-i].position = positionBuffer[index+i].originalPos;//float4(x,opos.y,opos.z,opos.w);
+        positionBuffer[index-i].velocity = 0;
+      }
+    }
+  }
 
 }
 //x轴随机运动
 float3 FreeMove(float4 freeMoveArg,float3 pos)
 {
-		float rangDow =step(0, pos.y -freeMoveArg.y);//算出底部位置是否已经超出自由运动范围
+  float rangDow =step(0, pos.y -freeMoveArg.y);//算出底部位置是否已经超出自由运动范围
 
-		float rangUp = step(0,   freeMoveArg.x - pos.y);//算出顶部位置是否已经超出自由运动范围
+  float rangUp = step(0,   freeMoveArg.x - pos.y);//算出顶部位置是否已经超出自由运动范围
 
-		float value1 = abs(pos.y-freeMoveArg.x) * rangDow * rangUp;
+  float value1 = abs(pos.y-freeMoveArg.x) * rangDow * rangUp;
 
-		value1 = (value1/(freeMoveArg.x-freeMoveArg.y)) *P/2;//转为弧度值，范围为[0,2π]
+  value1 = (value1/(freeMoveArg.x-freeMoveArg.y)) *P/2;//转为弧度值，范围为[0,2π]
 
-		value1 = sin(value1)*freeMoveArg.z * freeMoveArg.w;
+  value1 = sin(value1)*freeMoveArg.z * freeMoveArg.w;
 
-		return  float3(value1,0,0);
+  return  float3(value1,0,0);
 }
 
 //牵引移动，由头部牵动，其他部位不驱动
 void TowMove(uint3 id)
 {
-    
+  
 
-    int index= positionBuffer[id.x].heardIndex;
-    
+  int index= positionBuffer[id.x].heardIndex;
+  
 
-    if(index>0)//证明是尾部索引该ID附带的信息是一条线尾部的quad的信息，移动将靠这个来带动
+  if(index>0)//证明是尾部索引该ID附带的信息是一条线尾部的quad的信息，移动将靠这个来带动
+  {
+
+    float4 pos = positionBuffer[index].position;
+
+    float3 velocity = positionBuffer[index].velocity;
+
+    float3  addvalUp = positionBuffer[index].addvalUp;
+
+    float3 addvalDown =positionBuffer[index].addvalDown;
+
+    float3 fluidUp = positionBuffer[index].fluidUp;
+
+    float3 fluidDown = positionBuffer[index].fluidDown;
+
+    float4 freeMoveArg = positionBuffer[index].freeMoveArg;
+
+    float3 freemove = FreeMove(freeMoveArg,pos);
+
+    positionBuffer[index].oldPos = pos;
+    
+    pos.xyz+=velocity;
+    
+    
+    positionBuffer[index].position = pos;
+
+    positionBuffer[index].fluidUp = fluidUp;
+
+    positionBuffer[index].addvalUp = addvalUp;
+
+    positionBuffer[index].fluidDown = fluidDown;
+
+    positionBuffer[index].addvalDown = addvalDown;
+
+
+    [loop]
+    for (int i = index+1; i <index + _Column; i++)//身体做移动运动
     {
+      FluidStruct padTemp =  positionBuffer[i];
 
-	    float4 pos = positionBuffer[index].position;
-
-		float3 velocity = positionBuffer[index].velocity;
-
-		float3  addvalUp = positionBuffer[index].addvalUp;
-
-		float3 addvalDown =positionBuffer[index].addvalDown;
-
-		float3 fluidUp = positionBuffer[index].fluidUp;
-
-		float3 fluidDown = positionBuffer[index].fluidDown;
-
-		float4 freeMoveArg = positionBuffer[index].freeMoveArg;
-
-		float3 freemove = FreeMove(freeMoveArg,pos);
-
-		positionBuffer[index].oldPos = pos;
-	  
-	   
-	   //x轴圆上半部分运动的扩散的减速效果
-		if(length(fluidUp)!=0 &&length(addvalUp)!=0)
-		{
-		  if(abs(addvalUp.x -fluidUp.x  )<=0.01 &&  fluidUp.y==0)
-		  {
-		      fluidUp.y=0.0001;
-			  addvalUp = fluidUp;
-		      fluidUp.x=0;
-		   
-		    
-		  } else if(abs(addvalUp.x)<=0.001 &&  fluidUp.y==0.0001)
-		  {
-		     addvalUp.x=0;
-			 positionBuffer[index].velocity =  positionBuffer[index].initialVelocity;//恢复初始速度
-		  }
-		  else
-		  {
-		     addvalUp.x = lerp(addvalUp.x,fluidUp.x,_DeltaTime*4);
-		  };
-
-		}; 
-
-		//x轴圆下半部分运动的扩散的减速效果
-		if(length(fluidDown!=0))
-		{
-		  if(abs(addvalDown.x -fluidDown.x  )<=0.001)
-		  {
-			  fluidDown.x=0;
-		      fluidDown.y=0.0001;
-		     // positionBuffer[index].velocity =  positionBuffer[index].initialVelocity;//恢复初始速度
-		    
-		  }
-		  else
-		  {
-		     addvalDown = lerp(addvalDown,fluidDown,_DeltaTime*3);
-		  };
-		}
-
-		pos.xyz += (velocity+addvalUp+addvalDown + freemove)*_DeltaTime;
-
-		float d = distance(_Pos,pos.xyz);
-
-		
-		
-
-		//在固定高度就给它模拟流体
-		if(length(fluidUp)==0 && length(addvalUp)==0)
-		{  
-		    float  xdir = (pos.x -_Pos.x);//在x轴上的距离
-
-			float dis = abs(xdir);
-
-			float height = dis/3*_Radius * 0.3;
-
-
-		   if(pos.y<=_Pos.y+_Radius*1.1+ height)//0.2*_Radius为调节参数,X轴距离越大，高度就越高
-		  {
-
-		   if(dis<=3*_Radius)//3R为作用的范围
-		   {
-
-              float value1 = (xdir/3/_Radius) * P/2;//束缚区间为[-1,1]换作弧度的话，我们计算区间为90°，弧度的话就为π/2，所以区间就为[-π/2，π/2];
-		      float value2 = abs(cos(value1));//得到该点所得的x轴上的速度
-			 
-		      float3 value3 = normalize( float3(xdir,0,0))*value2;//得到了速度,注意，这个是在x轴上的速度
-			  
-			  fluidUp = value3;
-			  addvalUp = float3(0.000001,0,0);
-			  //垂直速度也会随着X轴所在位置改变
-			 // positionBuffer[index].velocity = velocity * sin(clamp(abs(value1),P/6,P/2));//clamp(x,a,b) 
-
-			//positionBuffer[index].velocity = velocity * abs(sin(value1));//clamp(x,a,b) 
-		   }
-		  }
-		}
-
-
-		if(length(fluidDown)==0)
-		{
-
-	    	float  xdir = (pos.x -_Pos.x);//在x轴上的距离
-
-			float dis = abs(xdir);
-
-			float value1 = dis/3*_Radius * 0.3;
-
-			
-		   if(pos.y<=_Pos.y- value1) //0.2*_Radius为调节参数,X轴距离越大，高度就就越低
-		  {
-
-		   if( dis<=3*_Radius)//3R为作用的范围
-		   {
-
-              float value1 = (xdir/3/_Radius) * P/2;//束缚区间为[-1,1]换作弧度的话，我们计算区间为90°，弧度的话就为π/2，所以区间就为[-π/2，π/2];
-		      float value2 = abs(cos(value1));//得到该点所得的x轴上的速度，
-			
-		      float3 value3 = normalize( float3(xdir,0,0) )*value2;//得到了速度,注意，这个是在x轴上的速度
-			  
-			  fluidDown = -value3 ;//+ velocity *-value2 *0.4;
-			  //垂直速度也会随着X轴所在位置改变
-			//  positionBuffer[index].velocity = velocity * sin(clamp(abs(value1),P/4,P/2));//clamp(x,a,b) 
-
-			//positionBuffer[index].velocity = velocity * abs(sin(value1));//clamp(x,a,b) 
-		   }
-		  }
-		  
-		}
-
-		if(d<_Radius)//撞上了
-		{
-
-		 float3 dir = normalize( pos.xyz - _Pos);
-
-	     float3 value = dot(velocity, dir) * dir ;//弹力公式1
-
-	     velocity = (velocity - 2.0 * value * _Threshold);//弹力公式2 
-
-		 pos.xyz = _Pos + dir * _Radius;
-
-
-		}
-	
-	    positionBuffer[index].position = pos;
-
-		positionBuffer[index].fluidUp = fluidUp;
-
-		positionBuffer[index].addvalUp = addvalUp;
-
-		positionBuffer[index].fluidDown = fluidDown;
-
-		positionBuffer[index].addvalDown = addvalDown;
-
-
-	 [loop]
-     for (int i = index+1; i <index + _Column; i++)//身体做移动运动
-	  {
-	    FluidStruct padTemp =  positionBuffer[i];
-
-		if(padTemp.delayFrame>=0)//间隔多少帧运动，这里默认是0帧
-		{
-		  padTemp.oldPos = padTemp.position;
-		  padTemp.delayFrame=0;
-		}
-		else
-		{
-		  padTemp.delayFrame++;
-		}
-		 padTemp.position = positionBuffer[i-1].oldPos;
-		
-		 positionBuffer[i]=padTemp;
-		
+      if(padTemp.delayFrame>=0)//间隔多少帧运动，这里默认是0帧
+      {
+        padTemp.oldPos = padTemp.position;
+        padTemp.delayFrame=0;
       }
-
-
-	   //随机取一个回复值
-	 float maxY = rand(float2(-pos.x*_DeltaTime,pos.x-Seed*_DeltaTime))*-10 -30;
-
-     if(pos.y<=maxY)//证明线已经走出屏幕
-		  {
-		    //复位该线的所有组成物体
-			float x = (rand(float2(-pos.x-Seed,pos.x-Seed*_DeltaTime))-0.5)*2 *18;
-	        [loop]
-            for (int i = 0; i < _Column; i++)
-	        {
-			 // float4 opos = positionBuffer[index+i].originalPos;
-		       float4 opos = positionBuffer[index+i].originalPos;
-		      positionBuffer[index+i].position = float4(x,opos.y,opos.z,opos.w);
-			  positionBuffer[index+i].velocity =  positionBuffer[index+i].initialVelocity;
-
-			  positionBuffer[index+i].fluidUp = float3(0,0,0);
-			  positionBuffer[index+i].fluidDown = float3(0,0,0);
-			  positionBuffer[index].addvalDown =  float3(0,0,0);
-			  positionBuffer[index].addvalUp = float3(0,0,0);
-	        }
-		  }
-		
-
-
+      else
+      {
+        padTemp.delayFrame++;
+      }
+      padTemp.position = positionBuffer[i-1].oldPos;
+      
+      positionBuffer[i]=padTemp;
+      
     }
-   
+
+
+    //随机取一个回复值
+    float maxY = rand(float2(-pos.x*_DeltaTime,pos.x-Seed*_DeltaTime))*-10 -30;
+
+    if(pos.y<=maxY)//证明线已经走出屏幕
+    {
+      //复位该线的所有组成物体
+      float x = (rand(float2(-pos.x-Seed,pos.x-Seed*_DeltaTime))-0.5)*2 *18;
+      [loop]
+      for (int i = 0; i < _Column; i++)
+      {
+        // float4 opos = positionBuffer[index+i].originalPos;
+        float4 opos = positionBuffer[index+i].originalPos;
+        positionBuffer[index+i].position = float4(x,opos.y,opos.z,opos.w);
+        positionBuffer[index+i].velocity =  positionBuffer[index+i].initialVelocity;
+
+        positionBuffer[index+i].fluidUp = float3(0,0,0);
+        positionBuffer[index+i].fluidDown = float3(0,0,0);
+        positionBuffer[index].addvalDown =  float3(0,0,0);
+        positionBuffer[index].addvalUp = float3(0,0,0);
+      }
+    }
+    
+
+
+  }
+  
 }
 
 //自由迁移运动
 void FreeMove(uint3 id)
 {
   int index= positionBuffer[id.x].heardIndex;
+  
+
+  if(index>0)//证明是尾部索引该ID附带的信息是一条线尾部的quad的信息，移动将靠这个来带动
+  {
+
+    float4 pos = positionBuffer[index].position;
+
+    float3 velocity = positionBuffer[index].velocity;
+
+    float4 freeMoveArg = positionBuffer[index].freeMoveArg;
+
+    positionBuffer[index].oldPos = pos;
+
+    float3 freemove;
+
+    float rangDow =step(0, pos.y -freeMoveArg.y);//算出底部位置是否已经超出自由运动范围
+
+    float rangUp = step(0,   freeMoveArg.x - pos.y);//算出顶部位置是否已经超出自由运动范围
+
     
 
-    if(index>0)//证明是尾部索引该ID附带的信息是一条线尾部的quad的信息，移动将靠这个来带动
+    float value1 = abs(pos.y-freeMoveArg.x) * rangDow * rangUp;
+
+    value1 = (value1/(freeMoveArg.x-freeMoveArg.y)) *P/2;//转为弧度值，范围为[0,2π]
+
+    value1 = sin(value1)*freeMoveArg.z * freeMoveArg.w;
+
+    freemove = float3(value1,0,0);
+    
+    pos.xyz += (velocity+freemove)*_DeltaTime;
+    
+    positionBuffer[index].position = pos;
+
+
+
+    [loop]
+    for (int i = index+1; i <index + _Column; i++)//身体做移动运动
     {
+      FluidStruct padTemp =  positionBuffer[i];
 
-	    float4 pos = positionBuffer[index].position;
-
-		float3 velocity = positionBuffer[index].velocity;
-
-		float4 freeMoveArg = positionBuffer[index].freeMoveArg;
-
-		positionBuffer[index].oldPos = pos;
-
-		float3 freemove;
-
-		float rangDow =step(0, pos.y -freeMoveArg.y);//算出底部位置是否已经超出自由运动范围
-
-		float rangUp = step(0,   freeMoveArg.x - pos.y);//算出顶部位置是否已经超出自由运动范围
-
-		
-
-		float value1 = abs(pos.y-freeMoveArg.x) * rangDow * rangUp;
-
-		value1 = (value1/(freeMoveArg.x-freeMoveArg.y)) *P/2;//转为弧度值，范围为[0,2π]
-
-		value1 = sin(value1)*freeMoveArg.z * freeMoveArg.w;
-
-		freemove = float3(value1,0,0);
-		
-		pos.xyz += (velocity+freemove)*_DeltaTime;
-	
-	    positionBuffer[index].position = pos;
-
-
-
-	 [loop]
-     for (int i = index+1; i <index + _Column; i++)//身体做移动运动
-	  {
-	    FluidStruct padTemp =  positionBuffer[i];
-
-		if(padTemp.delayFrame>=0)//间隔多少帧运动，这里默认是0帧
-		{
-		  padTemp.oldPos = padTemp.position;
-		  padTemp.delayFrame=0;
-		}
-		else
-		{
-		  padTemp.delayFrame++;
-		}
-		 padTemp.position = positionBuffer[i-1].oldPos;
-		
-		 positionBuffer[i]=padTemp;
-		
+      if(padTemp.delayFrame>=0)//间隔多少帧运动，这里默认是0帧
+      {
+        padTemp.oldPos = padTemp.position;
+        padTemp.delayFrame=0;
       }
-
-	  //随机取一个回复值
-	 float maxY = rand(float2(-pos.x*_DeltaTime,pos.x-Seed*_DeltaTime))*-10 -30;
-
-     if(pos.y<=maxY)//证明线已经走出屏幕
-		  {
-		    //复位该线的所有组成物体
-			
-			float x = (rand(float2(-pos.x-Seed,pos.x-Seed*_DeltaTime))-0.5)*2 *18;
-
-	        [loop]
-            for (int i = 0; i < _Column; i++)
-	        {
-			  float4 opos = positionBuffer[index+i].originalPos;
-		      positionBuffer[index+i].position = float4(x,opos.y,opos.z,opos.w);
-			  positionBuffer[index+i].velocity =  positionBuffer[index+i].initialVelocity;
-	        }
-		  }
-		
-
-
+      else
+      {
+        padTemp.delayFrame++;
+      }
+      padTemp.position = positionBuffer[i-1].oldPos;
+      
+      positionBuffer[i]=padTemp;
+      
     }
+
+    //随机取一个回复值
+    float maxY = rand(float2(-pos.x*_DeltaTime,pos.x-Seed*_DeltaTime))*-10 -30;
+
+    if(pos.y<=maxY)//证明线已经走出屏幕
+    {
+      //复位该线的所有组成物体
+      
+      float x = (rand(float2(-pos.x-Seed,pos.x-Seed*_DeltaTime))-0.5)*2 *18;
+
+      [loop]
+      for (int i = 0; i < _Column; i++)
+      {
+        float4 opos = positionBuffer[index+i].originalPos;
+        positionBuffer[index+i].position = float4(x,opos.y,opos.z,opos.w);
+        positionBuffer[index+i].velocity =  positionBuffer[index+i].initialVelocity;
+      }
+    }
+    
+
+
+  }
 }
 
 [numthreads(thread_group_size_x, thread_group_size_y, 1)]
@@ -414,12 +330,12 @@ void CSPositionKernel (uint3 id : SV_DispatchThreadID)
 {
 
   // DownMove(id);
- 
+  
   TowMove(id);
 
   // FreeMove(id);
-	   
-		
+  
+  
 }
 
 //位置变换  

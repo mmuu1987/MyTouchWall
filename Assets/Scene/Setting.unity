@@ -2465,7 +2465,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f930c91c25465d43afbee2d8ea0728e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MotionType: 6
+  MotionType: 8
   TestImage: {fileID: 0}
   Canvas: {fileID: 402142147}
   YearTexs:

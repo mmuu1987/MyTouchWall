@@ -52,7 +52,7 @@ public class VortexStreetManager : MonoBehaviour
     VelocityRT = new RenderTexture(TexWidth, TexHeight, 0, RenderTextureFormat.RGHalf); VelocityRT.Create();
     VelocityRT2 = new RenderTexture(TexWidth, TexHeight, 0, RenderTextureFormat.RGHalf);
     VelocityRT2.enableRandomWrite = true;
-    VelocityRT2.Create();
+    VelocityRT2.Create(); 
 
     PressureRT = new RenderTexture(TexWidth, TexHeight, 0, RenderTextureFormat.RHalf); PressureRT.Create();
     PressureRT2 = new RenderTexture(TexWidth, TexHeight, 0, RenderTextureFormat.RHalf); PressureRT2.Create();

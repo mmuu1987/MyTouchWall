@@ -505,8 +505,8 @@ MonoBehaviour:
   InstanceMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
   InstanceMaterial: {fileID: 2100000, guid: 6f148fb0482deac44baf15b059f7f117, type: 2}
   Type: 7
-  HorizontalColumn: 256
-  VerticalColumn: 256
+  HorizontalColumn: 512
+  VerticalColumn: 512
   SizeWidth: 1
   SizeHeight: 1
   Z: 10
@@ -666,12 +666,38 @@ MonoBehaviour:
   Z: 0
   MaxDepth: 3
   CurMaterial: {fileID: 2100000, guid: 561435c3131c74d4ca4bbcc0a0ed1e4c, type: 2}
-  InitialVelocity: {x: 0, y: -2, z: 0}
+  InitialVelocity: {x: 0, y: -0.02, z: 0}
   Gravity: {x: 0, y: 0, z: 0}
   Threshold: 0
   Radius: 2
   Collision: {fileID: 1393251354}
   Column: 500
+  DivergenceMat: {fileID: 2100000, guid: bac474b89e4307b45a3ee5991ad6c543, type: 2}
+  PressureMat: {fileID: 2100000, guid: abd6f2f0e0db4a645803f94430cb3f1e, type: 2}
+  SubtractMat: {fileID: 2100000, guid: 6a5714655616b0f4dbceb1d14b6f5cf4, type: 2}
+  AdvectionDyeMat: {fileID: 2100000, guid: cd9674e6455856942bb3de7c2b032558, type: 2}
+  AdvectionVelocityMat: {fileID: 2100000, guid: bfed491c825fe2041a8b67317bfbb78d,
+    type: 2}
+  InitDyeMat: {fileID: 2100000, guid: aad81fb25e703b440b207aafafea1d9b, type: 2}
+  BlockMat: {fileID: 2100000, guid: eefdfdfe64aa91a4db579811329ebf45, type: 2}
+  DisplayMat: {fileID: 2100000, guid: ffff3f3ba1de2df439bdcbd3f37eb086, type: 2}
+  DisplayRainbowMat: {fileID: 2100000, guid: b211a9984203fd14d99f85a2cc9476f8, type: 2}
+  ViscosityMat: {fileID: 2100000, guid: b7a3636fc1af54641ab6798a0478642c, type: 2}
+  DivergenceRT: {fileID: 0}
+  DyeRT: {fileID: 0}
+  DyeRT2: {fileID: 0}
+  VelocityRT: {fileID: 0}
+  VelocityRT2: {fileID: 0}
+  PressureRT: {fileID: 0}
+  PressureRT2: {fileID: 0}
+  InitDyeRT: {fileID: 0}
+  BlockRT: {fileID: 0}
+  dt: 1
+  ScaleImageComputeShader: {fileID: 7200000, guid: d7d29f0b40895034f87ad3f2468daa69,
+    type: 3}
+  Vector4: {x: 0, y: 0, z: 0, w: 0}
+  _moveTransform: {fileID: 1393251354}
+  MainCamera: {fileID: 2017221195}
 --- !u!1 &335226892
 GameObject:
   m_ObjectHideFlags: 0
@@ -1799,7 +1825,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1393251350}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.04, y: 2.39, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_Children: []
   m_Father: {fileID: 0}
