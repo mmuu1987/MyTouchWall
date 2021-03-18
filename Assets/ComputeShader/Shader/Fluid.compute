@@ -186,9 +186,9 @@ void TowMove(uint3 id)
 
     
     //从速度贴图上根据该点的位置获取速度
-    half2 v = Velocity[screenPos];
+    half2 v = Velocity[int2(screenPos.x,_ScreenParams.y-screenPos.y)];
 
-    VelocityTemp[screenPos] = Velocity[screenPos];
+    VelocityTemp[int2(screenPos.x,_ScreenParams.y-screenPos.y)] = Velocity[screenPos];
 
 
     if(screenPos.y>_ScreenParams.y || screenPos.y<=0)

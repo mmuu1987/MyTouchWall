@@ -287,7 +287,7 @@ public class FluidMotion : MotionInputMoveBase
     //Graphics.Blit(VelocityRT2, destination, DisplayRainbowMat);
     //Graphics.Blit(PressureRT2, destination, DisplayRainbowMat);
     // Graphics.Blit(source, destination);
-    Tip.texture = VelocityRT2Temp;
+    Tip.texture = VelocityRT2;
   }
 
   protected override void Dispatch(ComputeBuffer system)
