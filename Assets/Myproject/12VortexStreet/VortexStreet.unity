@@ -443,7 +443,7 @@ MonoBehaviour:
   BlockMat: {fileID: 2100000, guid: eefdfdfe64aa91a4db579811329ebf45, type: 2}
   DisplayMat: {fileID: 2100000, guid: ffff3f3ba1de2df439bdcbd3f37eb086, type: 2}
   DisplayRainbowMat: {fileID: 2100000, guid: b211a9984203fd14d99f85a2cc9476f8, type: 2}
-  ViscosityMat: {fileID: 2100000, guid: 5d0eddb0e2a3fb64995819749c0c4d8f, type: 2}
+  ViscosityMat: {fileID: 2100000, guid: 68aef680759e92040aeada9715589cf0, type: 2}
   DivergenceRT: {fileID: 0}
   DyeRT: {fileID: 0}
   DyeRT2: {fileID: 0}

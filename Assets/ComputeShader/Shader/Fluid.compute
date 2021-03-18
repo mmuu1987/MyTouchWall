@@ -31,6 +31,8 @@ RWStructuredBuffer<FluidStruct> positionBuffer;
 
 RWTexture2D<half2> Velocity;
 
+RWTexture2D<half2> VelocityTemp;
+
 float _Dim;
 
 float _DeltaTime;
@@ -179,8 +181,25 @@ void TowMove(uint3 id)
     float3 freemove = FreeMove(freeMoveArg,pos);
 
     positionBuffer[index].oldPos = pos;
+
+    float2 screenPos = WorldToScreenPos2(pos);
+
     
-    pos.xyz+=velocity;
+    //从速度贴图上根据该点的位置获取速度
+    half2 v = Velocity[screenPos];
+
+    VelocityTemp[screenPos] = Velocity[screenPos];
+
+
+    if(screenPos.y>_ScreenParams.y || screenPos.y<=0)
+    {
+      pos.xyz+=velocity;
+    }
+    else
+    {
+      pos.xy -= v*0.01 ;
+    }
+    
     
     
     positionBuffer[index].position = pos;
