@@ -239,7 +239,7 @@ void FreeMove(uint3 id : SV_DispatchThreadID)
    
     //从速度贴图上根据该点的位置获取速度
     half2  v = Velocity[int2(screenPos.x, (ScreenHeight - screenPos.y))];
-    pos.xy += v *4 ;
+    pos.xy += v *5 ;
 
    // pos.xyz += velocity;
     
@@ -247,6 +247,8 @@ void FreeMove(uint3 id : SV_DispatchThreadID)
 
     if (screenPos.x >= ScreenWidth)
     {
+        
+
         pos = originalPos;
     }
    

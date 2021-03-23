@@ -319,6 +319,15 @@ public class FluidMotion : MotionInputMoveBase
         Tip.texture = VelocityRT2;
     }
 
+    private Coroutine _coroutine;
+    private bool _isCompleted = false;
+    private IEnumerator WaitTime()
+    {
+        yield return new WaitForSeconds(4);
+        ComputeShader.SetTexture(dispatchID, "Velocity", VelocityRT2);
+        _isCompleted = true;
+
+    }
     protected override void Dispatch(ComputeBuffer system)
     {
         UpdateRt();
@@ -336,7 +345,16 @@ public class FluidMotion : MotionInputMoveBase
         ComputeShader.SetMatrix("ip", ip);
         ComputeShader.SetMatrix("iv", iv);
 
-        ComputeShader.SetTexture(dispatchID, "Velocity", VelocityRT2);
+        
+        if (_coroutine == null)
+        {
+            _coroutine = StartCoroutine(WaitTime());
+        }
+        else
+        { 
+            if(_isCompleted)
+             ComputeShader.SetTexture(dispatchID, "Velocity", VelocityRT2);
+        }
         ComputeShader.SetVector("_Pos", Collision.position);
         ComputeShader.SetFloat("_Radius", Radius);
         ComputeShader.SetFloat("Seed", Random.Range(0f, 1f));

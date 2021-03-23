@@ -441,7 +441,7 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
 
         if (_column < 100) _column = 100;
 
-        InstanceCount = Mathf.ClosestPowerOfTwo(InstanceCount);
+       // InstanceCount = Mathf.ClosestPowerOfTwo(InstanceCount);
 
         GalaxyPosList = Common.GetPos(PosTexture2D, 1.5f, InstanceCount,10);
 
