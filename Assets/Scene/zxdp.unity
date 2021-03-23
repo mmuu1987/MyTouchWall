@@ -505,8 +505,8 @@ MonoBehaviour:
   InstanceMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
   InstanceMaterial: {fileID: 2100000, guid: 6f148fb0482deac44baf15b059f7f117, type: 2}
   Type: 7
-  HorizontalColumn: 512
-  VerticalColumn: 512
+  HorizontalColumn: 1280
+  VerticalColumn: 720
   SizeWidth: 1
   SizeHeight: 1
   Z: 10
@@ -683,7 +683,7 @@ MonoBehaviour:
   BlockMat: {fileID: 2100000, guid: eefdfdfe64aa91a4db579811329ebf45, type: 2}
   DisplayMat: {fileID: 2100000, guid: ffff3f3ba1de2df439bdcbd3f37eb086, type: 2}
   DisplayRainbowMat: {fileID: 2100000, guid: b211a9984203fd14d99f85a2cc9476f8, type: 2}
-  ViscosityMat: {fileID: 2100000, guid: b7a3636fc1af54641ab6798a0478642c, type: 2}
+  ViscosityMat: {fileID: 2100000, guid: 68aef680759e92040aeada9715589cf0, type: 2}
   DivergenceRT: {fileID: 0}
   DyeRT: {fileID: 0}
   DyeRT2: {fileID: 0}
@@ -693,9 +693,11 @@ MonoBehaviour:
   PressureRT2: {fileID: 0}
   InitDyeRT: {fileID: 0}
   BlockRT: {fileID: 0}
+  VelocityRT2Temp: {fileID: 0}
   dt: 1
   ScaleImageComputeShader: {fileID: 7200000, guid: d7d29f0b40895034f87ad3f2468daa69,
     type: 3}
+  Zdepth: 1000
   Vector4: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &335226892
 GameObject:
@@ -1848,7 +1850,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1412117925
 RectTransform:
   m_ObjectHideFlags: 0

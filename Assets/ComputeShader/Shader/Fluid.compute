@@ -43,6 +43,9 @@ float _Threshold;//弹性系数
 int _Column;
 float Seed;
 
+int ScreenWidth;
+int ScreenHeight;
+
 
 //视矩阵，也就是世界到摄像机的矩阵，由C#传递过来
 float4x4 v;
@@ -66,9 +69,9 @@ float2  WorldToScreenPos2(float3 pos)
   
   screenPos.xy=screenPos.xy/screenPos.w;
   
-  float width = screenPos.x * _ScreenParams.x;
+  float width = screenPos.x * ScreenWidth;
   
-  float height = screenPos.y * _ScreenParams.y;
+  float height = screenPos.y * ScreenHeight;
   
   return float2(width,height);
 }
@@ -84,58 +87,6 @@ void rotate2D(inout float2 v, float r)
   float s, c;
   sincos(r, s, c);
   v = float2(v.x * c - v.y * s, v.x * s + v.y * c);
-}
-
-//做自由落体运动
-void DownMove(uint3 id)
-{
-  float4 pos = positionBuffer[id.x].position;
-
-  float3 velocity = positionBuffer[id.x].velocity;
-
-  velocity += _Gravity*_DeltaTime;
-
-  pos.xyz += velocity*_DeltaTime;
-
-  float d = distance(_Pos,pos.xyz);
-
-  if(d<=_Radius)//撞上了
-  {
-
-    float3 dir = normalize( pos.xyz - _Pos);
-
-    float3 value = dot(velocity, dir) * dir ;//弹力公式1
-
-    velocity = (velocity - 2.0 * value * _Threshold);//弹力公式2 
-
-    pos.xyz = _Pos + dir * _Radius;
-  }
-
-  positionBuffer[id.x].velocity = velocity;
-  
-  positionBuffer[id.x].position = pos;
-
-
-
-
-  int index = positionBuffer[id.x].heardIndex;
-
-  if(index>=0)//证明是线头
-  {
-    if(pos.y<=-30)//证明线已经走出屏幕
-    {
-      //复位该线的所有组成物体
-      float x = (rand(float2(-pos.x,pos.x))-0.5)*2 *18;
-      [loop]
-      for (int i = 0; i < _Column; i++)
-      {
-        // float4 opos = positionBuffer[index+i].originalPos;
-        positionBuffer[index-i].position = positionBuffer[index+i].originalPos;//float4(x,opos.y,opos.z,opos.w);
-        positionBuffer[index-i].velocity = 0;
-      }
-    }
-  }
-
 }
 //x轴随机运动
 float3 FreeMove(float4 freeMoveArg,float3 pos)
@@ -263,96 +214,54 @@ void TowMove(uint3 id)
 }
 
 //自由迁移运动
-void FreeMove(uint3 id)
+void FreeMove(uint3 id : SV_DispatchThreadID)
 {
-  int index= positionBuffer[id.x].heardIndex;
-  
-
-  if(index>0)//证明是尾部索引该ID附带的信息是一条线尾部的quad的信息，移动将靠这个来带动
-  {
-
-    float4 pos = positionBuffer[index].position;
-
-    float3 velocity = positionBuffer[index].velocity;
-
-    float4 freeMoveArg = positionBuffer[index].freeMoveArg;
-
-    positionBuffer[index].oldPos = pos;
-
-    float3 freemove;
-
-    float rangDow =step(0, pos.y -freeMoveArg.y);//算出底部位置是否已经超出自由运动范围
-
-    float rangUp = step(0,   freeMoveArg.x - pos.y);//算出顶部位置是否已经超出自由运动范围
-
     
-
-    float value1 = abs(pos.y-freeMoveArg.x) * rangDow * rangUp;
-
-    value1 = (value1/(freeMoveArg.x-freeMoveArg.y)) *P/2;//转为弧度值，范围为[0,2π]
-
-    value1 = sin(value1)*freeMoveArg.z * freeMoveArg.w;
-
-    freemove = float3(value1,0,0);
-    
-    pos.xyz += (velocity+freemove)*_DeltaTime;
-    
-    positionBuffer[index].position = pos;
-
-
-
-    [loop]
-    for (int i = index+1; i <index + _Column; i++)//身体做移动运动
+  /*  if (id.x == 1)
     {
-      FluidStruct padTemp =  positionBuffer[i];
+        positionBuffer[id.x].position.y = ScreenHeight;
+        positionBuffer[id.x].position.x = ScreenWidth;
+        return;
+    }*/
 
-      if(padTemp.delayFrame>=0)//间隔多少帧运动，这里默认是0帧
-      {
-        padTemp.oldPos = padTemp.position;
-        padTemp.delayFrame=0;
-      }
-      else
-      {
-        padTemp.delayFrame++;
-      }
-      padTemp.position = positionBuffer[i-1].oldPos;
-      
-      positionBuffer[i]=padTemp;
-      
-    }
+    float4 pos = positionBuffer[id.x].position;
 
-    //随机取一个回复值
-    float maxY = rand(float2(-pos.x*_DeltaTime,pos.x-Seed*_DeltaTime))*-10 -30;
+    float4 originalPos = positionBuffer[id.x].originalPos;
 
-    if(pos.y<=maxY)//证明线已经走出屏幕
-    {
-      //复位该线的所有组成物体
-      
-      float x = (rand(float2(-pos.x-Seed,pos.x-Seed*_DeltaTime))-0.5)*2 *18;
+    float2 screenPos = WorldToScreenPos2(pos);
 
-      [loop]
-      for (int i = 0; i < _Column; i++)
-      {
-        float4 opos = positionBuffer[index+i].originalPos;
-        positionBuffer[index+i].position = float4(x,opos.y,opos.z,opos.w);
-        positionBuffer[index+i].velocity =  positionBuffer[index+i].initialVelocity;
-      }
-    }
+    //float4 originalPos = positionBuffer[0].position;
+
+    float3 velocity = positionBuffer[0].velocity;
     
+   
+   
+   
+    //从速度贴图上根据该点的位置获取速度
+    half2  v = Velocity[int2(screenPos.x, (ScreenHeight - screenPos.y))];
+    pos.xy += v *4 ;
 
+   // pos.xyz += velocity;
+    
+  //  float2 newScreenPos = WorldToScreenPos2(pos);
 
-  }
+    if (screenPos.x >= ScreenWidth)
+    {
+        pos = originalPos;
+    }
+   
+
+    positionBuffer[id.x].position = pos;
+   
 }
 
 [numthreads(thread_group_size_x, thread_group_size_y, 1)]
 void CSPositionKernel (uint3 id : SV_DispatchThreadID)
 {
 
-  // DownMove(id);
   
-  TowMove(id);
 
-  // FreeMove(id);
+   FreeMove(id);
   
   
 }

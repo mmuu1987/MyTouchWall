@@ -3,6 +3,8 @@
 #pragma kernel GetPos
 
 
+#include "UnityCG.cginc"
+
 struct Data
 {
   float2 pos;
@@ -57,6 +59,6 @@ void GetPos(uint3 id : SV_DispatchThreadID)
   if(screenPos.x==id.x && screenPos.y==id.y)
   {
     //PosBuff[0].pos = Velocity[id.xy].xy;
-    PosBuff[0].pos = Velocity[id.xy].xy;
+    PosBuff[0].pos = _ScreenParams.xy;
   }
 }

@@ -50,14 +50,14 @@
         return o;
       }
       float4 frag(v2f i) :SV_Target{
-        float4 col = tex2D(VelocityTex, i.uv + 0.01f*dt * tex2D(VelocityTex, i.uv));
+        float4 col = tex2D(VelocityTex, i.uv - 0.01f*dt * tex2D(VelocityTex, i.uv));
         if(tex2D(BlockTex, i.uv).x > 0.99f)col.xy = float2(0.0f, 0.0f);
         
         //float2 dir = i.uv - float2(0.3f, 0.5f);
         //float dis = dir.x*dir.x + dir.y*dir.y;
         //if(dis < 0.001f)col.xy = float2(0.0f, 0.0f);
-        //if (i.uv.x < 0.01f)col.xy = float2(1.0f, 0.0f);
-        if (i.uv.y> 0.99f)col.xy = float2(0.0f, 1.0f);
+        if (i.uv.x < 0.01f)col.xy = float2(1.0f, 0.0f);
+        //if (i.uv.y< 0.01f)col.xy = float2(0.0f, 1.0f);
         return col;
       }
       ENDCG
