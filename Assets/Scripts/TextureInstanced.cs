@@ -251,7 +251,7 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
     public RawImage MoveTexture;
 
     /// <summary>
-    /// 当前实例渲染的材质
+    /// 当前实例渲染的材质   
     /// </summary>
     public Material CurMaterial { get; private set; }
 
@@ -441,7 +441,7 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
 
         if (_column < 100) _column = 100;
 
-       // InstanceCount = Mathf.ClosestPowerOfTwo(InstanceCount);
+        InstanceCount = Mathf.ClosestPowerOfTwo(InstanceCount);
 
         GalaxyPosList = Common.GetPos(PosTexture2D, 1.5f, InstanceCount,10);
 

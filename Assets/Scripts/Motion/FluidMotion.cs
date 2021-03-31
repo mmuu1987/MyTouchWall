@@ -5,52 +5,12 @@ using UnityEngine;
 using UnityEngine.UI;
 
 
-public struct FluidStruct
-{
-    public Vector4 position;
 
-    public Vector3 velocity;
-    /// <summary>
-    /// 物体初始速度
-    /// </summary>
-    public Vector3 initialVelocity;
-
-    public Vector4 oldPos;
-    /// <summary>
-    /// 插值所需要到的容器圆上
-    /// </summary>
-    public Vector3 addvalUp;
-    /// <summary>
-    /// 插值所需要到的容器圆下
-    /// </summary>
-    public Vector3 addvalDown;
-    /// <summary>
-    /// 水平移动的向量圆的上半部分
-    /// </summary>
-    public Vector3 fluidUp;
-    /// <summary>
-    /// 圆的下班部分的运动
-    /// </summary>
-    public Vector3 fluidDown;
-    /// <summary>
-    /// 头索引，如果是就大于0，如果不是则为-1
-    /// </summary>
-    public int heardIndex;
-    /// <summary>
-    /// 初始状态的位置
-    /// </summary>
-    public Vector4 originalPos;
-    /// <summary>
-    /// 水平随机自由移动需要的参数,x,为在Y轴的最上触发距离，y为Y轴最下触发距离，为移动强度，w为触发的方向
-    /// </summary>
-    public Vector4 freeMoveArg;
-    public int delayFrame;
-}
 
 public class FluidMotion : MotionInputMoveBase
 {
 
-    private FluidStruct[] _posDirs;
+    private PosAndDir[] _posDirs;
 
     public Material CurMaterial;
 
@@ -117,7 +77,7 @@ public class FluidMotion : MotionInputMoveBase
     /// <summary>
     /// 与相机的距离
     /// </summary>
-    public float Zdepth = 1000f;
+    private float Zdepth = 30;
 
     public Vector4 Vector4;
 
@@ -132,14 +92,14 @@ public class FluidMotion : MotionInputMoveBase
         TexWidth = Screen.width;
         TexHeight = Screen.height;
 
-        int stride = Marshal.SizeOf(typeof(FluidStruct));
+        int stride = Marshal.SizeOf(typeof(PosAndDir));
         Debug.Log("stride byte size is " + stride);
         ComputeBuffer = new ComputeBuffer(ComputeBuffer.count, stride);
 
         ComputeBuffer colorBuffer = new ComputeBuffer(ComputeBuffer.count, 16);
 
         Vector4[] colors = new Vector4[ComputeBuffer.count];
-        _posDirs = new FluidStruct[ComputeBuffer.count];
+        _posDirs = new PosAndDir[ComputeBuffer.count];
 
         TextureInstanced.Instance.ChangeInstanceMat(CurMaterial);
         CurMaterial.enableInstancing = true;
@@ -148,6 +108,12 @@ public class FluidMotion : MotionInputMoveBase
         Vector3 velocity = new Vector3(0f, -2f, 0f);
 
 
+        _screenPosLeftDown = Camera.main.ScreenToWorldPoint(new Vector3(0, 0, Zdepth - Camera.main.transform.position.z));
+        _screenPosLeftUp = Camera.main.ScreenToWorldPoint(new Vector3(0, Height, Zdepth - Camera.main.transform.position.z));
+        _screenPosRightDown = Camera.main.ScreenToWorldPoint(new Vector3(Width, 0, Zdepth - Camera.main.transform.position.z));
+        _screenPosRightUp = Camera.main.ScreenToWorldPoint(new Vector3(Width, Height, Zdepth - Camera.main.transform.position.z));
+
+       // List<Vector2> randomPos = Common.Sample2D((_screenPosRightDown.x - _screenPosLeftDown.x)*3 , (_screenPosLeftUp.y - _screenPosLeftDown.y)*3 , 1 , 25);
 
 
         #region  备份的粒子排列数据
@@ -192,28 +158,76 @@ public class FluidMotion : MotionInputMoveBase
 
         #endregion
 
+
+        float beginPosX = Camera.main.ScreenToWorldPoint(new Vector3(0, 0, Zdepth)).x;
+       
+
+        //for (int i = 0; i < _posDirs.Length; i++)
+        //{
+            
+        //    int y = i/TexWidth;
+
+        //    int x = i - y * TexWidth;
+            
+        //    Vector3 wPos = Camera.main.ScreenToWorldPoint(new Vector3(x, y, Zdepth));
+        //    Vector4 wposVector4 = new Vector4(wPos.x,wPos.y,wPos.z,5f);
+           
+        //   // _posDirs[i].oldPos = new Vector4(beginPosX, wposVector4.y, wposVector4.z, wposVector4.w);
+        //    _posDirs[i].position = wposVector4;
+        //    _posDirs[i].originalPos = new Vector4(beginPosX, wposVector4.y, wposVector4.z, wposVector4.w);
+        //    _posDirs[i].velocity = new Vector3(.1f,0f,0f);
+        //    colors[i] = Random.ColorHSV();
+           
+        //}
+        Vector3 ranomPos = new Vector3(100f,100f,500f);
+        Vector3 camPos = Camera.main.transform.position;
         for (int i = 0; i < _posDirs.Length; i++)
         {
-            
-            int y = i/TexWidth;
+            int picIndex = 0;
+            int isRest = 0;
+            int level = -1;
+            Vector2 size = PictureHandle.Instance.GetIndexSizeOfNumber(i, out level, out isRest, out picIndex);//得到缩放尺寸
 
-            int x = i - y * TexWidth;
-            
-            Vector3 wPos = Camera.main.ScreenToWorldPoint(new Vector3(x, y, Zdepth));
-            Vector4 wposVector4 = new Vector4(wPos.x,wPos.y,wPos.z,1.5f);
-            _posDirs[i].position = wposVector4;
-            _posDirs[i].originalPos = wposVector4;
-            _posDirs[i].velocity = new Vector3(5f,0f,0f);
+            float xScale = size.x / 512f;
+            float yScale = size.y / 512f;
+            float proportion = size.x / size.y;
+            if (xScale >= 2 || yScale >= 2)
+            {
+                //如果超过2倍大小，则强制缩放到一倍大小以内，并以宽度为准，等比例减少  
+                int a = (int)xScale;
+                xScale = xScale - (a) + 2f;
+
+                yScale = xScale / proportion;
+            }
+
+
+            _posDirs[i].initialVelocity = new Vector3(xScale, yScale, 0f);//填充真实宽高
+            _posDirs[i].picIndex = picIndex;
+
+            _posDirs[i].bigIndex = picIndex;
+            _posDirs[i].initialVelocity = new Vector3(xScale, yScale, 0f);//填充真实宽高
+            //Vector2 rangeVector2 = randomPos[Random.Range(0, randomPos.Count)];
+            //Vector4 value = new Vector4(rangeVector2.x+_screenPosLeftDown.x*3, rangeVector2.y+ _screenPosLeftDown.y, Zdepth+Random.Range(0,100),1f);
+            Vector4 value = new Vector4(Random.Range(-ranomPos.x, ranomPos.x)+ camPos.x, Random.Range(-ranomPos.y, ranomPos.y)+ camPos.y, Random.Range(0, ranomPos.z)+ camPos.z, 1f);
+            _posDirs[i].position = value;
+            _posDirs[i].originalPos = new Vector4(beginPosX, value.y, value.z, value.w);
+            _posDirs[i].velocity = new Vector3(0, 0f, 0f);
             colors[i] = Random.ColorHSV();
+
         }
 
 
+        TextureInstanced.Instance.ChangeInstanceMat(CurMaterial);
+        CurMaterial.enableInstancing = true;
 
+       
         colorBuffer.SetData(colors);
         ComputeBuffer.SetData(_posDirs);
 
+        CurMaterial.SetVector("_WHScale", new Vector4(1f, 1f, 1f, 1f));
         CurMaterial.SetBuffer("positionBuffer", ComputeBuffer);
         CurMaterial.SetBuffer("colorBuffer", colorBuffer);
+        CurMaterial.SetTexture("_TexArr", TextureInstanced.Instance.TexArr);
 
         ComputeShader.SetBuffer(dispatchID, "positionBuffer", ComputeBuffer);
         ComputeShader.SetFloat("_Dim", Mathf.Sqrt(ComputeBuffer.count));
@@ -330,7 +344,7 @@ public class FluidMotion : MotionInputMoveBase
     }
     protected override void Dispatch(ComputeBuffer system)
     {
-        UpdateRt();
+       // UpdateRt();
 
 
         //屏幕坐标转为投影坐标矩阵
@@ -346,15 +360,7 @@ public class FluidMotion : MotionInputMoveBase
         ComputeShader.SetMatrix("iv", iv);
 
         
-        if (_coroutine == null)
-        {
-            _coroutine = StartCoroutine(WaitTime());
-        }
-        else
-        { 
-            if(_isCompleted)
-             ComputeShader.SetTexture(dispatchID, "Velocity", VelocityRT2);
-        }
+        ComputeShader.SetTexture(dispatchID, "Velocity", VelocityRT2);
         ComputeShader.SetVector("_Pos", Collision.position);
         ComputeShader.SetFloat("_Radius", Radius);
         ComputeShader.SetFloat("Seed", Random.Range(0f, 1f));

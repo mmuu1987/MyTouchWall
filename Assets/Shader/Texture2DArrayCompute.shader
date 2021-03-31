@@ -8,65 +8,7 @@
 		_WHScale("WHScale",vector) = (1,1,1,1)//目前只使用x y
 	}
 		SubShader{
-			//第一个描边PASS
-			  //  Pass {
-		   //         Tags { "RenderType"="Opaque" "Queue"="Transparent"}
-
-					//Blend SrcAlpha  OneMinusSrcAlpha
-		   //         CGPROGRAM
-
-		   //         #pragma vertex vert
-		   //         #pragma fragment frag
-		   //         #pragma target 4.5
-					////#pragma multi_compile_instancing
-		   //         #include "UnityCG.cginc"
-
-		   //         sampler2D _MainTex;
-					//fixed4 _BGColor;
-
-				 // struct PosDir
-				 //  {
-				 //     float4 position;
-		   //           float3 velocity;
-				 //     float3 initialVelocity;
-		   //           float4 originalPos;
-				 //     float3 moveTarget;
-					//  float3 moveDir;
-					//  float2 indexRC;
-					//  int picIndex;
-				 //  };
-					//#if SHADER_TARGET >= 45
-		   //         StructuredBuffer<PosDir> positionBuffer;
-		   //         #endif
-
-		   //         struct v2f
-		   //         {
-		   //             float4 pos : SV_POSITION;
-		   //         };
-		   //         v2f vert (appdata_base v, uint instanceID : SV_InstanceID)
-		   //         {
-		   //         #if SHADER_TARGET >= 45
-		   //             float4 data = positionBuffer[instanceID].position;
-		   //         #else
-		   //             float4 data = 0;
-		   //         #endif
-
-		   //             float3 localPosition = v.vertex.xyz * data.w * 1.05f;//向外拓展，用作描边
-		   //             float3 worldPosition = data.xyz + localPosition;
-
-		   //             v2f o;
-		   //             o.pos = mul(UNITY_MATRIX_VP, float4(worldPosition, 1.0f));
-		   //             return o;
-		   //         }
-
-		   //         fixed4 frag (v2f i, uint instanceID : SV_InstanceID) : SV_Target
-		   //         {
-		   //            return _BGColor;
-		   //         }
-
-		   //         ENDCG
-		   //     }
-
+			
 				Pass {
 					Tags { "RenderType" = "Opaque" "Queue" = "Transparent"}
 

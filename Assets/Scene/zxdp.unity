@@ -504,9 +504,9 @@ MonoBehaviour:
   InstanceCount: 100000
   InstanceMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
   InstanceMaterial: {fileID: 2100000, guid: 6f148fb0482deac44baf15b059f7f117, type: 2}
-  Type: 7
-  HorizontalColumn: 1280
-  VerticalColumn: 720
+  Type: 8
+  HorizontalColumn: 256
+  VerticalColumn: 256
   SizeWidth: 1
   SizeHeight: 1
   Z: 10
@@ -697,7 +697,6 @@ MonoBehaviour:
   dt: 1
   ScaleImageComputeShader: {fileID: 7200000, guid: d7d29f0b40895034f87ad3f2468daa69,
     type: 3}
-  Zdepth: 1000
   Vector4: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &335226892
 GameObject:

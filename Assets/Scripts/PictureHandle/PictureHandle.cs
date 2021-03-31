@@ -130,13 +130,13 @@ public class PictureHandle : MonoBehaviour
          }
 
         
-          HandleTextureArry(Texs);
+         HandleTextureArry(Texs);
 
-          DestroyTexture();//贴图加载到GPU那边后这边内存就清理掉
+         DestroyTexture();//贴图加载到GPU那边后这边内存就清理掉
 
-           _info = Resources.Load<GameObject>("Prefabs/Info");
-           //预制体缩放，后面用来做缩放动画
-          _info.transform.localScale = Vector3.one * 0.1f;
+         _info = Resources.Load<GameObject>("Prefabs/Info");
+         //预制体缩放，后面用来做缩放动画
+         _info.transform.localScale = Vector3.one * 0.1f;
 
         IsInitEnd = true;
 
@@ -535,6 +535,13 @@ public class PictureHandle : MonoBehaviour
 
 
     }
+    /// <summary>
+    /// 缩放图片
+    /// </summary>
+    /// <param name="targeTexture2D"></param>
+    /// <param name="dstWidth">目标宽</param>
+    /// <param name="dstHeight">目标高</param>
+    /// <returns></returns>
     public Texture2D ScaleImageUserRt(Texture targeTexture2D, int dstWidth, int dstHeight)
     {
 
@@ -591,7 +598,7 @@ public class PictureHandle : MonoBehaviour
 
 
     /// <summary>
-    /// 给图片加边框和标题，标题写的是年份，并且缩放图片规格，返回字节数据
+    /// 给图片加边框和标题
     /// </summary>
     /// <param name="yearTex">附着在左上角的提示贴图</param>
     /// <param name="contents"></param>
