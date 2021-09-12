@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class GalaxyMotion : MotionInputMoveBase
+public class GalaxyMotion : InputMovementBase
 {
     private DepthInfo[] _depths;
 

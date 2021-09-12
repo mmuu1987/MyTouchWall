@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 
 
-public class FluidMotion : MotionInputMoveBase
+public class FluidMotion : InputMovementBase
 {
 
     private PosAndDir[] _posDirs;

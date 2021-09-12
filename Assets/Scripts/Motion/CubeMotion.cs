@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 /// <summary>
 /// 组成立方体的运动类型
 /// </summary>
-public class CubeMotion : MotionInputMoveBase
+public class CubeMotion : InputMovementBase
 {
 
 

@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using Random = UnityEngine.Random;
 
-public class ShowFirstMotion : MotionInputMoveBase
+public class ShowFirstMotion : InputMovementBase
 {
   private DepthInfo[] _depths;
 

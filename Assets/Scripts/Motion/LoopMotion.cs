@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-public class LoopMotion : MotionInputMoveBase
+public class LoopMotion : InputMovementBase
 {
 
     /// <summary>

@@ -58,7 +58,7 @@ public class ClickData
 /// <summary>
 /// 多层深度的面片运动
 /// </summary>
-public class MultiDepthMotion : MotionInputMoveBase
+public class MultiDepthMotion : InputMovementBase
 {
 
     private DepthInfo[] _depths;

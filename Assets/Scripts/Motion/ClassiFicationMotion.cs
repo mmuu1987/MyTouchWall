@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// 分类运动模式
 /// </summary>
-public class ClassiFicationMotion : MotionInputMoveBase
+public class ClassiFicationMotion : InputMovementBase
 {
 
 

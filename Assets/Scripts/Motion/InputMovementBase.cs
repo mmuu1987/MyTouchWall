@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class MotionInputMoveBase : MovementBase, IDragHandler, IEndDragHandler, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler,IBeginDragHandler
+public class InputMovementBase : MovementBase, IDragHandler, IEndDragHandler, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler,IBeginDragHandler
     
 {
     /// <summary>
@@ -92,7 +92,7 @@ public class MotionInputMoveBase : MovementBase, IDragHandler, IEndDragHandler, 
     {
         dispatchID = ComputeShader.FindKernel(computeShaderName);
         if (!string.IsNullOrEmpty(InitName))
-        InitID = ComputeShader.FindKernel(InitName);
+         InitID = ComputeShader.FindKernel(InitName);
         base.Start();
     }
 
