@@ -28,8 +28,8 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _RADIUSBUCE: 0.348
+    - _RADIUSBUCE: 0.249
     m_Colors:
     - _BGColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _WHScale: {r: 0.060272217, g: 0.06011963, b: 1, a: 1}
+    - _WHScale: {r: 1, g: 1, b: 1, a: 1}

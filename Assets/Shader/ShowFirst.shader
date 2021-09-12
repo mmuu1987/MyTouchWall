@@ -12,6 +12,17 @@
   SubShader {
     cull Off
 
+
+    Pass
+		{
+			//开启深度写入
+			ZWrite On
+			//ColorMask语义有以下几种：ColorMask RGB|A|0|其他任何RGB组合
+			//为0时代表该Pass不写入任何颜色通道，即不会输出任何颜色
+			ColorMask 0
+		}
+
+
     Pass {
 
       Tags { "Queue"="Transparent"   "RenderType"="Transparent"   "IgnoreProjection" = "True"}
@@ -152,7 +163,7 @@
         {
           discard;
         }
-        return fixed4(col.rgb,alpha*col.a);
+        return fixed4(col.rgb,0.5);
       }
 
       ENDCG

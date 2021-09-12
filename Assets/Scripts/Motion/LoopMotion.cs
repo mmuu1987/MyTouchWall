@@ -11,12 +11,20 @@ public class LoopMotion : MotionInputMoveBase
     /// </summary>
     private ComputeBuffer _clickPointBuff;
 
+
+    protected override void Start()
+    {
+     
+        this.Type = MotionType.Loop;
+        base.Start();
+    }
+
     protected override void Init()
     {
         base.Init();
 
 
-        MotionType = MotionType.Loop;
+        
 
         _screenPosLeftDown = Camera.main.ScreenToWorldPoint(new Vector3(0, 0, Z - Camera.main.transform.position.z));
         _screenPosLeftUp = Camera.main.ScreenToWorldPoint(new Vector3(0, Height, Z - Camera.main.transform.position.z));

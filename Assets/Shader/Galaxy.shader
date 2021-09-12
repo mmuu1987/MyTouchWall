@@ -14,6 +14,17 @@
   SubShader {
     cull Off
 
+
+    Pass
+		{
+			//开启深度写入
+			ZWrite On
+			//ColorMask语义有以下几种：ColorMask RGB|A|0|其他任何RGB组合
+			//为0时代表该Pass不写入任何颜色通道，即不会输出任何颜色
+			ColorMask 0
+		}
+
+
     Pass {
 
       Tags { "Queue"="Transparent"   "RenderType"="Transparent"   "IgnoreProjection" = "True"}
@@ -96,7 +107,13 @@
         #endif
         v2f o;
 
-        
+          unity_ObjectToWorld._11_21_31_41 = float4(data.w, 0, 0, 0);
+          unity_ObjectToWorld._12_22_32_42 = float4(0, data.w, 0, 0);
+          unity_ObjectToWorld._13_23_33_43 = float4(0, 0, data.w, 0);
+          unity_ObjectToWorld._14_24_34_44 = float4(data.xyz, 1);
+          unity_WorldToObject = unity_ObjectToWorld;
+          unity_WorldToObject._14_24_34 *= -1;
+          unity_WorldToObject._11_22_33 = 1.0f / unity_WorldToObject._11_22_33;
 
         float3 initialVelocity = positionBuffer[instanceID].initialVelocity;//获取宽高
         
@@ -112,6 +129,8 @@
         newVector = processDistance(newVector,worldPos);
 
         float3 localPos = data.xyz + newVector;
+
+        v.vertex.xyz = localPos;
 
         o.pos = UnityObjectToClipPos(float4(localPos,v.vertex.w));
         

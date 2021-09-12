@@ -60,13 +60,21 @@ public class ShowFirstMotion : MotionInputMoveBase
   private MultiDepthPictureMove _depthPictureMove;
 
   private int _widthScale = 1;
-  protected override void Init()
+
+  protected override void Start()
+  {
+     
+      this.Type = MotionType.ShowFirstMotion;
+      base.Start();
+    }
+
+    protected override void Init()
   {
     base.Init();
 
     _clickPoint = Vector3.one * 1000000;//重置数据
 
-    MotionType = MotionType.ShowFirstMotion;
+    
     // Camera.main.fieldOfView = 30f;
     _touchIds = new Dictionary<int, ClickData>();
     PosAndDir[] datas = new PosAndDir[ComputeBuffer.count];
@@ -371,7 +379,7 @@ public class ShowFirstMotion : MotionInputMoveBase
 
   public override void OnPointerUp(PointerEventData eventData)
   {
-    if (MotionType != TextureInstanced.Instance.Type) return;
+    if (Type != TextureInstanced.Instance.Type) return;
     base.OnPointerUp(eventData);
 
     if (_touchIds.ContainsKey(eventData.pointerId))
@@ -392,7 +400,7 @@ public class ShowFirstMotion : MotionInputMoveBase
 
   public override void OnPointerDown(PointerEventData eventData)
   {
-    if (MotionType != TextureInstanced.Instance.Type) return;
+    if (Type != TextureInstanced.Instance.Type) return;
     base.OnPointerDown(eventData);
     //  Debug.Log("this is OnPointerDown  eventData.clickTime " + eventData.clickTime);
 
@@ -408,7 +416,7 @@ public class ShowFirstMotion : MotionInputMoveBase
 
   public override void OnDrag(PointerEventData eventData)
   {
-    if (MotionType != TextureInstanced.Instance.Type) return;
+    if (Type != TextureInstanced.Instance.Type) return;
     base.OnDrag(eventData);
     if (_touchIds.ContainsKey(eventData.pointerId))
     {

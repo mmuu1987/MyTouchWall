@@ -8,11 +8,20 @@
 		_WHScale("WHScale",vector) = (1,1,1,1)//目前只使用x y
 	}
 		SubShader{
-			
+			Pass
+		{
+			//开启深度写入
+			ZWrite On
+			//ColorMask语义有以下几种：ColorMask RGB|A|0|其他任何RGB组合
+			//为0时代表该Pass不写入任何颜色通道，即不会输出任何颜色
+			ColorMask 0
+		}
+
 				Pass {
 					Tags { "RenderType" = "Opaque" "Queue" = "Transparent"}
 
-					//Blend SrcAlpha  OneMinusSrcAlpha
+					Blend SrcAlpha  OneMinusSrcAlpha
+					ZWrite  off
 					CGPROGRAM
 
 					#pragma vertex vert
@@ -71,8 +80,8 @@
 
 			 fixed4 frag(v2f i, uint instanceID : SV_InstanceID) : SV_Target
 			 {
-				fixed4 col = fixed4(1,0,0,1);
-				fixed4 col2 = fixed4(1,0,0,1);
+				fixed4 col = fixed4(1,0,0,0.5);
+				fixed4 col2 = fixed4(1,0,0,0.5);
 				#if SHADER_TARGET >= 45
 				int index = positionBuffer[instanceID].picIndex;
 				int index2 = positionBuffer[instanceID].bigIndex;
@@ -103,7 +112,7 @@
 				 col = _Color;
 			#endif
 
-			   return fixed4(col.xyz,1);
+			   return fixed4(col.xyz,0.5);
 			}
 
 			ENDCG

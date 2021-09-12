@@ -7,7 +7,16 @@ using UnityEngine.EventSystems;
 /// </summary>
 public class CubeMotion : MotionInputMoveBase
 {
-   
+
+
+    protected override void Start()
+    {
+       
+        this.Type = MotionType.Cube;
+        base.Start();
+    }
+
+
     protected override void Update()
     {
         base.Update();
@@ -17,7 +26,7 @@ public class CubeMotion : MotionInputMoveBase
     {
         base.Init();
 
-        MotionType = MotionType.Cube;
+       
 
         PosAndDir[] datas = new PosAndDir[ComputeBuffer.count];
 

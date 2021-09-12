@@ -98,11 +98,19 @@ public class MultiDepthMotion : MotionInputMoveBase
     private Dictionary<int, ClickData> _touchIds;
 
     private MultiDepthPictureMove _depthPictureMove;
+
+    protected override void Start()
+    {
+      
+        this.Type = MotionType.MultiDepth;
+        base.Start();
+    }
+
     protected override void Init()
     {
         base.Init();
 
-        MotionType = MotionType.MultiDepth;
+      
         // Camera.main.fieldOfView = 30f;
 
         _touchIds = new Dictionary<int, ClickData>();
@@ -550,7 +558,7 @@ public class MultiDepthMotion : MotionInputMoveBase
 
     public override void OnPointerUp(PointerEventData eventData)
     {
-        if (MotionType != TextureInstanced.Instance.Type) return;
+        if (Type != TextureInstanced.Instance.Type) return;
         base.OnPointerUp(eventData);
 
         if (_touchIds.ContainsKey(eventData.pointerId))
@@ -571,7 +579,7 @@ public class MultiDepthMotion : MotionInputMoveBase
 
     public override void OnPointerDown(PointerEventData eventData)
     {
-        if (MotionType != TextureInstanced.Instance.Type) return;
+        if (Type != TextureInstanced.Instance.Type) return;
         base.OnPointerDown(eventData);
         //  Debug.Log("this is OnPointerDown  eventData.clickTime " + eventData.clickTime);
 
@@ -587,7 +595,7 @@ public class MultiDepthMotion : MotionInputMoveBase
 
     public override void OnDrag(PointerEventData eventData)
     {
-        if (MotionType != TextureInstanced.Instance.Type) return;
+        if (Type != TextureInstanced.Instance.Type) return;
         base.OnDrag(eventData);
         if (_touchIds.ContainsKey(eventData.pointerId))
         {
@@ -598,7 +606,7 @@ public class MultiDepthMotion : MotionInputMoveBase
 
     protected override void Update()
     {
-        if (MotionType != TextureInstanced.Instance.Type) return;
+        if (Type != TextureInstanced.Instance.Type) return;
         if (Input.GetKeyDown(KeyCode.Space))
         {
             ChangeState(Depth);

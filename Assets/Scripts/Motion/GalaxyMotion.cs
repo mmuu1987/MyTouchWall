@@ -54,12 +54,20 @@ public class GalaxyMotion : MotionInputMoveBase
     private MultiDepthPictureMove _depthPictureMove;
 
     private int _widthScale = 1;
+
+    protected override void Start()
+    {
+      
+        this.Type = MotionType.Galaxy;
+        base.Start();
+    }
+
     protected override void Init()
     {
         base.Init();
 
        // Camera.main.GetComponent<FlyCamera>().enabled = true;
-        MotionType = MotionType.Galaxy;
+       
         // Camera.main.fieldOfView = 30f;
         _touchIds = new Dictionary<int, ClickData>();
         PosAndDir[] datas = new PosAndDir[ComputeBuffer.count];
@@ -264,7 +272,7 @@ public class GalaxyMotion : MotionInputMoveBase
 
     public override void OnPointerUp(PointerEventData eventData)
     {
-        if (MotionType != TextureInstanced.Instance.Type) return;
+        if (Type != TextureInstanced.Instance.Type) return;
         base.OnPointerUp(eventData);
 
         if (_touchIds.ContainsKey(eventData.pointerId))
@@ -285,7 +293,7 @@ public class GalaxyMotion : MotionInputMoveBase
 
     public override void OnPointerDown(PointerEventData eventData)
     {
-        if (MotionType != TextureInstanced.Instance.Type) return;
+        if (Type != TextureInstanced.Instance.Type) return;
         base.OnPointerDown(eventData);
         //  Debug.Log("this is OnPointerDown  eventData.clickTime " + eventData.clickTime);
 
@@ -301,7 +309,7 @@ public class GalaxyMotion : MotionInputMoveBase
 
     public override void OnDrag(PointerEventData eventData)
     {
-        if (MotionType != TextureInstanced.Instance.Type) return;
+        if (Type != TextureInstanced.Instance.Type) return;
         base.OnDrag(eventData);
         if (_touchIds.ContainsKey(eventData.pointerId))
         {

@@ -420,7 +420,6 @@ GameObject:
   - component: {fileID: 306164150}
   - component: {fileID: 306164152}
   - component: {fileID: 306164151}
-  - component: {fileID: 306164153}
   - component: {fileID: 306164154}
   - component: {fileID: 306164155}
   - component: {fileID: 306164156}
@@ -489,44 +488,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 306164149}
   m_CullTransparentMesh: 0
---- !u!114 &306164153
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 306164149}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bfd76b51ae1d3344bb73270011c0203f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  InstanceCount: 100000
-  InstanceMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
-  InstanceMaterial: {fileID: 2100000, guid: 6f148fb0482deac44baf15b059f7f117, type: 2}
-  Type: 8
-  HorizontalColumn: 256
-  VerticalColumn: 256
-  SizeWidth: 1
-  SizeHeight: 1
-  Z: 10
-  tipLD: {fileID: 655517794}
-  tipLU: {fileID: 134965148}
-  tipRD: {fileID: 1652337745}
-  tipRU: {fileID: 171127271}
-  TexArr: {fileID: 0}
-  TextureCount: 0
-  copyTexMethod: 0
-  CubeMotion: {fileID: 306164154}
-  LoopMotion: {fileID: 306164155}
-  MultiDepthMotion: {fileID: 306164157}
-  ClassiFicationMotion: {fileID: 306164156}
-  ShowFirstMotion: {fileID: 306164158}
-  GalaxyMotion: {fileID: 306164159}
-  FluidMotion: {fileID: 306164160}
-  PosTexture2D: {fileID: 2800000, guid: 137cd5a16a9f8b84bb490a28a46f72da, type: 3}
-  MoveTexture: {fileID: 0}
-  GalaxyPosList: []
 --- !u!114 &306164154
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -534,7 +495,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 306164149}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 59ba2e716038eca4a8e17bfe56caee13, type: 3}
   m_Name: 
@@ -552,7 +513,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 306164149}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7d42048ecb3aa8d4baf7c410dd5bcfc0, type: 3}
   m_Name: 
@@ -570,7 +531,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 306164149}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ef5a46ccfb2f6f243ad717e20a15a114, type: 3}
   m_Name: 
@@ -589,7 +550,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 306164149}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3422fd3272e11b54ab8f2bba6203425c, type: 3}
   m_Name: 
@@ -610,7 +571,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 306164149}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 86e61851895266c4781bc71a81cd344b, type: 3}
   m_Name: 
@@ -632,7 +593,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 306164149}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77fe71c8cca2b2f4e89684650c214761, type: 3}
   m_Name: 
@@ -654,7 +615,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 306164149}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 72749745b352cfd48bea2136da978c19, type: 3}
   m_Name: 
@@ -1014,6 +975,14 @@ GameObject:
   - component: {fileID: 621736093}
   - component: {fileID: 621736097}
   - component: {fileID: 621736092}
+  - component: {fileID: 621736105}
+  - component: {fileID: 621736104}
+  - component: {fileID: 621736103}
+  - component: {fileID: 621736102}
+  - component: {fileID: 621736101}
+  - component: {fileID: 621736100}
+  - component: {fileID: 621736099}
+  - component: {fileID: 621736098}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1132,6 +1101,215 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52831e8ae8295e34c8cb5514036270ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &621736098
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 621736091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72749745b352cfd48bea2136da978c19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  computeShaderName: CSPositionKernel
+  InitName: InitLerp
+  ComputeShader: {fileID: 7200000, guid: 5d04e0196983bab46b5fb535ea29990b, type: 3}
+  StopTime: 0.2
+  Z: 0
+  MaxDepth: 3
+  CurMaterial: {fileID: 2100000, guid: 561435c3131c74d4ca4bbcc0a0ed1e4c, type: 2}
+  InitialVelocity: {x: 0, y: -0.02, z: 0}
+  Gravity: {x: 0, y: 0, z: 0}
+  Threshold: 0
+  Radius: 2
+  Collision: {fileID: 1393251354}
+  Column: 500
+  Tip: {fileID: 1412117926}
+  DivergenceMat: {fileID: 2100000, guid: bac474b89e4307b45a3ee5991ad6c543, type: 2}
+  PressureMat: {fileID: 2100000, guid: abd6f2f0e0db4a645803f94430cb3f1e, type: 2}
+  SubtractMat: {fileID: 2100000, guid: 6a5714655616b0f4dbceb1d14b6f5cf4, type: 2}
+  AdvectionDyeMat: {fileID: 2100000, guid: cd9674e6455856942bb3de7c2b032558, type: 2}
+  AdvectionVelocityMat: {fileID: 2100000, guid: bfed491c825fe2041a8b67317bfbb78d,
+    type: 2}
+  InitDyeMat: {fileID: 2100000, guid: aad81fb25e703b440b207aafafea1d9b, type: 2}
+  BlockMat: {fileID: 2100000, guid: eefdfdfe64aa91a4db579811329ebf45, type: 2}
+  DisplayMat: {fileID: 2100000, guid: ffff3f3ba1de2df439bdcbd3f37eb086, type: 2}
+  DisplayRainbowMat: {fileID: 2100000, guid: b211a9984203fd14d99f85a2cc9476f8, type: 2}
+  ViscosityMat: {fileID: 2100000, guid: 68aef680759e92040aeada9715589cf0, type: 2}
+  DivergenceRT: {fileID: 0}
+  DyeRT: {fileID: 0}
+  DyeRT2: {fileID: 0}
+  VelocityRT: {fileID: 0}
+  VelocityRT2: {fileID: 0}
+  PressureRT: {fileID: 0}
+  PressureRT2: {fileID: 0}
+  InitDyeRT: {fileID: 0}
+  BlockRT: {fileID: 0}
+  VelocityRT2Temp: {fileID: 0}
+  dt: 1
+  ScaleImageComputeShader: {fileID: 7200000, guid: d7d29f0b40895034f87ad3f2468daa69,
+    type: 3}
+  Vector4: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &621736099
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 621736091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77fe71c8cca2b2f4e89684650c214761, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  computeShaderName: CSPositionKernel
+  InitName: InitLerp
+  ComputeShader: {fileID: 7200000, guid: b94baa274c1e2f64490214e62ed1c218, type: 3}
+  StopTime: 0.2
+  Z: 0
+  MaxDepth: 3
+  CurMaterial: {fileID: 2100000, guid: 1c16b72744bc5f047b69033543db61cf, type: 2}
+  Canvas: {fileID: 621736095}
+  SrcPos: {x: 0, y: 0, z: 0}
+  Depth: 2
+--- !u!114 &621736100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 621736091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86e61851895266c4781bc71a81cd344b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  computeShaderName: CSPositionKernel
+  InitName: InitLerp
+  ComputeShader: {fileID: 7200000, guid: aef8423e1ea138e4bb623d89cf44d6be, type: 3}
+  StopTime: 0.2
+  Z: 0
+  MaxDepth: 3
+  CurMaterial: {fileID: 2100000, guid: 0bbd8e616b5fbe64ab4ba2548329f18d, type: 2}
+  Canvas: {fileID: 621736095}
+  SrcPos: {x: 0, y: 0, z: 185}
+  Depth: 2
+--- !u!114 &621736101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 621736091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3422fd3272e11b54ab8f2bba6203425c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  computeShaderName: CSPositionKernel
+  InitName: InitLerp
+  ComputeShader: {fileID: 7200000, guid: 4b7b568f8498f8b41af042774d811b53, type: 3}
+  StopTime: 0.2
+  Z: 0
+  MaxDepth: 3
+  CurMaterial: {fileID: 2100000, guid: 5a5578461df821a4db484f5b2f30d238, type: 2}
+  Canvas: {fileID: 621736095}
+  Depth: 2
+--- !u!114 &621736102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 621736091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef5a46ccfb2f6f243ad717e20a15a114, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  computeShaderName: CSPositionKernel
+  InitName: InitLerp
+  ComputeShader: {fileID: 7200000, guid: ef0c89c0fd884be449f9dc48eb35b3c0, type: 3}
+  StopTime: 0.2
+  Z: 10
+  MaxDepth: 3
+  CategoryCount: 8
+--- !u!114 &621736103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 621736091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d42048ecb3aa8d4baf7c410dd5bcfc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  computeShaderName: CSPositionKernel
+  InitName: InitLerp
+  ComputeShader: {fileID: 7200000, guid: 75c8295e9df5b654cbc6c513f46802da, type: 3}
+  StopTime: 1
+  Z: 10
+  MaxDepth: 3
+--- !u!114 &621736104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 621736091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59ba2e716038eca4a8e17bfe56caee13, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  computeShaderName: CSMain
+  InitName: 
+  ComputeShader: {fileID: 7200000, guid: 1c18216eff7d71343ade362ee66fb87b, type: 3}
+  StopTime: 0.2
+  Z: 1
+  MaxDepth: -30
+--- !u!114 &621736105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 621736091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bfd76b51ae1d3344bb73270011c0203f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  InstanceCount: 100000
+  InstanceMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+  InstanceMaterial: {fileID: 2100000, guid: 6f148fb0482deac44baf15b059f7f117, type: 2}
+  Type: 8
+  HorizontalColumn: 256
+  VerticalColumn: 256
+  SizeWidth: 1
+  SizeHeight: 1
+  Z: 10
+  tipLD: {fileID: 655517794}
+  tipLU: {fileID: 134965148}
+  tipRD: {fileID: 1652337745}
+  tipRU: {fileID: 171127271}
+  TexArr: {fileID: 0}
+  TextureCount: 0
+  copyTexMethod: 0
+  CubeMotion: {fileID: 621736104}
+  LoopMotion: {fileID: 621736103}
+  MultiDepthMotion: {fileID: 621736101}
+  ClassiFicationMotion: {fileID: 621736102}
+  ShowFirstMotion: {fileID: 621736100}
+  GalaxyMotion: {fileID: 621736099}
+  FluidMotion: {fileID: 621736098}
+  PosTexture2D: {fileID: 2800000, guid: 137cd5a16a9f8b84bb490a28a46f72da, type: 3}
+  MoveTexture: {fileID: 0}
+  GalaxyPosList: []
 --- !u!1 &655517790
 GameObject:
   m_ObjectHideFlags: 0
@@ -2493,7 +2671,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2017221190}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3ec5cf6b591e948459dda13b48a693d7, type: 3}
   m_Name: 

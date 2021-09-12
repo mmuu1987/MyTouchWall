@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// 组成立方体的运动类型
 /// </summary>
-public class MotionBase : MonoBehaviour
+public class MovementBase : MonoBehaviour
 {
     public string computeShaderName;
 
@@ -23,7 +23,8 @@ public class MotionBase : MonoBehaviour
     /// </summary>
     public float StopTime = 0.2f;
 
-   
+
+    public MotionType Type { get;protected set; }
 
     /// <summary>
     /// 屏幕宽
@@ -59,7 +60,11 @@ public class MotionBase : MonoBehaviour
     private bool _isEnterUpdate = false;
 
     private Coroutine _coroutine;
-    protected virtual void Start() { }
+
+    protected virtual void Start()
+    {
+        Debug.Log("this type is " + Type);
+    }
     protected virtual void Update() { }
 
     protected ComputeBuffer ComputeBuffer;
@@ -89,12 +94,9 @@ public class MotionBase : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 设置数据
-    /// </summary>
-    public void SetData()
+    public void SetType(MotionType type)
     {
-
+        this.Type = type;
     }
     protected virtual void Init()
     {

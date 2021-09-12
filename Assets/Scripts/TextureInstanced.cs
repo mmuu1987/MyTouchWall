@@ -261,6 +261,8 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
 
     public Action<PointerEventData> DragEndAction;
 
+
+    private List<MovementBase> _movements = new List<MovementBase>();
     private void Awake()
     {
         if (Instance != null) throw new UnityException("已经有单例了，不能重复赋值");
@@ -274,6 +276,24 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
         Width = Screen.width;
         Height = Screen.height;
 
+       
+       
+
+        _movements.Add( CubeMotion);
+
+        _movements.Add(LoopMotion);
+
+        _movements.Add(MultiDepthMotion);
+
+        _movements.Add(ClassiFicationMotion);
+
+        _movements.Add(ShowFirstMotion);
+
+        _movements.Add(GalaxyMotion);
+
+        _movements.Add(FluidMotion);
+
+
         Type = PictureHandle.Instance.MotionType;
 
         InstanceCount = HorizontalColumn * VerticalColumn;
@@ -285,13 +305,13 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
         argsBuffer = new ComputeBuffer(5, sizeof(uint), ComputeBufferType.IndirectArguments);
 
         CreateBuffers();
-        // StartCoroutine(LoadVideo(path));
+       
     }
 
 
     void LateUpdate()
     {
-        InputManager.Instance.HandleInput();
+        
         // UpdateBuffers();
         UpdateBuffers(Type);
         // Render
@@ -313,126 +333,21 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
         }
     }
 
-    void UpdateCubeBuffers()
-    {
-        LoopMotion.ExitMotion();
-        ClassiFicationMotion.ExitMotion();
-        ShowFirstMotion.ExitMotion();
-        MultiDepthMotion.ExitMotion();
-        GalaxyMotion.ExitMotion();
-        FluidMotion.ExitMotion();
-        CubeMotion.StartMotion(this);
-
-    }
-
-    void UpdateLoop()
-    {
-        CubeMotion.ExitMotion();
-        ClassiFicationMotion.ExitMotion();
-        MultiDepthMotion.ExitMotion();
-        GalaxyMotion.ExitMotion();
-        ShowFirstMotion.ExitMotion();
-        FluidMotion.ExitMotion();
-        LoopMotion.StartMotion(this);
-    }
-
-    void UpdateClassiFicationMotion()
-    {
-        CubeMotion.ExitMotion();
-        LoopMotion.ExitMotion();
-        ShowFirstMotion.ExitMotion();
-        MultiDepthMotion.ExitMotion();
-        FluidMotion.ExitMotion();
-        ClassiFicationMotion.StartMotion(this);
-    }
-    void UpdateMultiDepthMotion()
-    {
-        CubeMotion.ExitMotion();
-        GalaxyMotion.ExitMotion();
-        LoopMotion.ExitMotion();
-        ShowFirstMotion.ExitMotion();
-        ClassiFicationMotion.ExitMotion();
-        FluidMotion.ExitMotion();
-        MultiDepthMotion.StartMotion(this);
-        
-    }
-
-    void UpdateShowFirstMotion()
-    {
-        CubeMotion.ExitMotion();
-        GalaxyMotion.ExitMotion();
-        LoopMotion.ExitMotion();
-        ClassiFicationMotion.ExitMotion();
-        MultiDepthMotion.ExitMotion();
-        FluidMotion.ExitMotion();
-        ShowFirstMotion.StartMotion(this);
-    }
-    void UpdateGalaxyMotion()
-    {
-        CubeMotion.ExitMotion();
-        LoopMotion.ExitMotion();
-        ClassiFicationMotion.ExitMotion();
-        MultiDepthMotion.ExitMotion();
-        ShowFirstMotion.ExitMotion();
-        FluidMotion.ExitMotion();
-        GalaxyMotion.StartMotion(this);
-    }
-    void UpdateFluidMotion()
-    {
-        CubeMotion.ExitMotion();
-        LoopMotion.ExitMotion();
-        ClassiFicationMotion.ExitMotion();
-        MultiDepthMotion.ExitMotion();
-        ShowFirstMotion.ExitMotion();
-        FluidMotion.StartMotion(this);
-        GalaxyMotion.ExitMotion();
-    }
-
-    public void CubeType()
-    {
-        Type = MotionType.Cube;
-    }
-
-    public void LoopType()
-    {
-        Type = MotionType.Loop;
-    }
+  
     void UpdateBuffers(MotionType type)
     {
 
-        switch (type)
+        foreach (MovementBase movement in _movements)
         {
-            case MotionType.None:
-                break;
-            case MotionType.Wall:
-                //UpdateWallBuffers();
-                break;
-            case MotionType.Cube:
-                UpdateCubeBuffers();
-                break;
-            case MotionType.Loop:
-                UpdateLoop();
-                break;
-            case MotionType.ClassiFicationMotion:
-                UpdateClassiFicationMotion();
-                break;
-            case MotionType.MultiDepth:
-                UpdateMultiDepthMotion();
-                break;
-            case MotionType.ShowFirstMotion:
-                UpdateShowFirstMotion();
-                break;
-            case MotionType.Galaxy:
-                UpdateGalaxyMotion();
-                break;
-            case MotionType.Fluid:
-                UpdateFluidMotion();
-                break;
-            default:
-                throw new ArgumentOutOfRangeException("type", type, null);
+            if (movement.Type == type)
+            {
+                movement.StartMotion(this);
+            }
+            else
+            {
+                movement.ExitMotion();
+            }
         }
-
-
     }
 
     void CreateBuffers()
@@ -529,20 +444,5 @@ public class TextureInstanced : MonoBehaviour, IDragHandler, IEndDragHandler
 
 
     private int depth = 2;
-    //private void OnGUI()
-    //{
-    //    if (GUI.Button(new Rect(0f, 0f, 300f, 300f), "test"))
-    //    {
-    //        MultiDepthMotion.ChangeState(depth);
-    //        depth--;
-    //        if (depth < 0) depth = 2;
-    //        //ClassiFicationMotion.ChangeState(1);
-    //    }
-    //    if (GUI.Button(new Rect(300f, 0f, 300f, 300f), "test2"))
-    //    {
-
-           
-    //    }
-    //}
-
+   
 }

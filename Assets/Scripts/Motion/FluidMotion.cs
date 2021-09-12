@@ -82,11 +82,16 @@ public class FluidMotion : MotionInputMoveBase
     public Vector4 Vector4;
 
     private RenderTexture rtDes;
-
+    protected override void Start()
+    {
+      
+        this.Type = MotionType.Fluid;
+        base.Start();
+    }
     protected override void Init()
     {
         base.Init();
-        MotionType = MotionType.Fluid;
+       
 
         Debug.Log("screen width is " + Screen.width + "  screen height is " + Screen.height);
         TexWidth = Screen.width;

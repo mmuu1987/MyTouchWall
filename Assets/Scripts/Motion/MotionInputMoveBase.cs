@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class MotionInputMoveBase : MotionBase, IDragHandler, IEndDragHandler, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler,IBeginDragHandler
+public class MotionInputMoveBase : MovementBase, IDragHandler, IEndDragHandler, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler,IBeginDragHandler
     
 {
     /// <summary>
@@ -87,7 +87,7 @@ public class MotionInputMoveBase : MotionBase, IDragHandler, IEndDragHandler, IP
     /// </summary>
     protected float MoveSpeed = 5f;
 
-    protected MotionType MotionType;
+   
     protected override void Start()
     {
         dispatchID = ComputeShader.FindKernel(computeShaderName);
